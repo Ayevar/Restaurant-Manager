@@ -32,13 +32,17 @@ class Ingredients:
         # Reference Week 10 Lecture
         self.db = shelve.open(self.file)
 
+        # REMOVE LATER
+        self.db.clear()
+
         # Reference: https://docs.python.org/3/library/shelve.html
         # If database has not been created (has no keys), then create
         if not list(self.db.keys()):
             # Store each item as a key in the db dict
-            self.db["Bread Flour"] = {"Quantity": 16, "Unit": "5 KG", "Cost": 9.52, "Category": self.CATEGORIES[2]}
-            self.db["Gala Apples"] = {"Quantity": 9, "Unit": "4 LB", "Cost": 7.99, "Category": self.CATEGORIES[3]}
-            self.db["Chicken Thighs"] = {"Quantity": 9, "Unit": "1.5 KG", "Cost": 12.35, "Category": self.CATEGORIES[4]}
+
+            self.db["Bread Flour"] = {"Quantity": 16, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
+            self.db["Gala Apples"] = {"Quantity": 9, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
+            self.db["Chicken Thighs"] = {"Quantity": 9, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
 
 
     def get_all_ingredients(self):

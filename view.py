@@ -7,69 +7,6 @@ https://q.utoronto.ca/courses/407671/modules/items/6875607
 import tkinter as tk
 from tkinter import ttk
 
-from PIL.ImageOps import expand
-
-HEADER_FONT = ("Roboto", 24)
-
-
-
-# Reference SeaofBTCapp code from,
-# https://q.utoronto.ca/courses/407671/modules/items/6875607
-class Frame_layout(tk.Tk):
-
-    def __init__(self, *args, **kwargs):
-        # Call parent tkinter class
-        tk.Tk.__init__(self, *args, **kwargs)
-
-        # create a frame container
-        container = tk.Frame(self, bg="white")
-
-        # pack the container
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(1, weight=1)
-
-        self.sidebar_body = tk.Frame(container, bg="orange", padx=20, pady=20)
-        self.sidebar_body.grid(row=0, column=0, sticky="NS", )
-
-
-        # create container for page content
-        self.page_content = tk.Frame(container, bg="white", padx=20, pady=20)
-        self.page_content.grid(row=0, column=1, sticky="NSEW")
-
-        self.pages = {}
-
-        for p in (Inventory, Orders):
-            page = p(self.page_content, self)
-            self.pages[p] = page
-            page.grid(row=0, column=0, sticky="nsew")
-
-        self.change_page(Inventory)
-        # create sidebar buttons
-
-        self.sidebar_title = tk.Label(self.sidebar_body, text="LOGO", fg="white", bg="orange", font=HEADER_FONT)
-        self.sidebar_title.pack(pady=10)
-
-        self.btn_1 = self.btn(self.sidebar_body,"Inventory", lambda: self.change_page(Inventory))
-        self.btn_1.pack(pady=10)
-
-        self.btn_2 = self.btn(self.sidebar_body,"New Order", lambda: self.change_page(Orders))
-        self.btn_2.pack(pady=10)
-
-
-    def change_page(self, next):
-        # advance to next frame
-        frame = self.pages[next]
-        # update frame
-        frame.tkraise()
-
-    # create default button style
-    def btn(self, parent, text, command):
-
-        btn = tk.Button(parent, text=text,
-                               command=command, bg="white", fg="orange", font="BOLD")
-        return btn
-
 class Inventory(tk.Frame):
 
     """
@@ -79,42 +16,79 @@ class Inventory(tk.Frame):
 
     def __init__(self, parent, controller):
 
-        """ create labels and create treeview"""
+        """ create labels and create treeview
+
+            TO DO:
+            - Put into grid layout
+            - Add functions
+            - Finish Orders page
+
+        """
+
+        self.controller = controller
 
         tk.Frame.__init__(self, parent)
 
-        label = tk.Label(self, text="Inventory", fg="orange", bg="white",
-                         font=HEADER_FONT, pady= 10)
-        label.pack(fill="x", expand=True)
+        label = tk.Label(self, text="Inventory", fg="orange", bg=self.controller.BACKGROUND_COLOR,
+                         font=self.controller.HEADER_FONT)
+        label.pack(fill="both", expand=True)
 
 
-        # To-Do: Create button options [edit, sort, etc]
+        # To-Do: Create button options functions [edit, sort, etc]
+        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR, pady= 10)
+        self.button_frame.pack(fill="both", expand=True)
 
+        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange", state='disabled')
+        btn_edit.pack(side="right")
+        btn_sort = tk.Button(self.button_frame, text="sort", bg="orange")
+        btn_sort.pack(side="right")
 
         # Reference: week 10 demo code "simple_treeview_demo.py"
         # Create treeview
-        self.inventory = ttk.Treeview(self, columns=["Quantity", "Units", "Category", "Cost"], selectmode='browse')
+        cols = ['Name', 'Quantity', 'Units', 'Category', 'Cost']
 
-        # Name each column
-        self.inventory.heading("#0", text="Name")
-        self.inventory.heading("Quantity", text="Quantity")
-        self.inventory.heading("Units", text="Units")
-        self.inventory.heading("Category", text="Category")
-        self.inventory.heading("Cost", text="Cost")
+        self.inventory = ttk.Treeview(self, columns=cols, show="headings",
+                                      selectmode='browse')
 
+        # Name each column and set alignment
+        for col in cols:
+            # Create a heading
+            self.inventory.heading(col, text=col)
+            self.inventory.column(col, anchor='w')
+
+        self.populate_inventory()
         self.inventory.pack()
 
+
+
+    def populate_inventory(self):
+        # using the controller reference, we can access the data
+        # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
+        ingredients = self.controller.ingredient_data.get_all_ingredients()
+
+        # Look through keys and values in ingredient_data dict
+        for name, ing_metadata in ingredients.items():
+            # create a list with the ingredient name
+            store_vals = [name]
+            # Look through the inner keys in the dict and store their
+            # values in list
+            for keys, val in ing_metadata.items():
+                store_vals.append(val)
+            # add the prepared list as a row to the inventory
+            self.inventory.insert("", "end", values=store_vals)
 
     def sort(self):
         """ Use code from slides"""
         pass
 
 
-
 class Orders(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Orders", fg="orange", bg="white",
-                         font=HEADER_FONT, pady=10)
+
+        self.controller = controller
+
+        label = tk.Label(self, text="Orders", fg="orange", bg=self.controller.BACKGROUND_COLOR,
+                         font=self.controller.HEADER_FONT, pady=10)
         label.pack(fill="both", expand=True)
