@@ -40,9 +40,9 @@ class Ingredients:
         if not list(self.db.keys()):
             # Store each item as a key in the db dict
 
-            self.db["Bread Flour"] = {"Quantity": 16, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
-            self.db["Gala Apples"] = {"Quantity": 9, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
-            self.db["Chicken Thighs"] = {"Quantity": 9, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
+            self.db["Bread Flour"] = {"Quantity": 13, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
+            self.db["Gala Apples"] = {"Quantity": 14, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
+            self.db["Chicken Thighs"] = {"Quantity": 16, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
 
 
     def get_all_ingredients(self):

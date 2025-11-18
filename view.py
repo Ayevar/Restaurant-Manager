@@ -33,32 +33,33 @@ class Inventory(tk.Frame):
                          font=self.controller.HEADER_FONT)
         label.pack(fill="both", expand=True)
 
+        # Reference: week 10 demo code "simple_treeview_demo.py"
+        # Create treeview
+        cols = ['name', 'quantity', 'units', 'category', 'cost']
+
+        self.inventory = ttk.Treeview(self, columns=cols, show="headings",
+                                      selectmode='browse')
+        # Name each column and set alignment
+        for col in cols:
+            # Create a heading
+            self.inventory.heading(col, text=col.title())
+            self.inventory.column(col, anchor='w')
+
 
         # To-Do: Create button options functions [edit, sort, etc]
         self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR, pady= 10)
         self.button_frame.pack(fill="both", expand=True)
 
+        # BUTTONS
         btn_edit = tk.Button(self.button_frame, text="edit", bg="orange", state='disabled')
+
+        btn_sort = tk.Button(self.button_frame, text="view low stock",
+                             bg="orange", command=lambda: self.sort_lowstock(self.inventory, "quantity"))
+
         btn_edit.pack(side="right")
-        btn_sort = tk.Button(self.button_frame, text="sort", bg="orange")
         btn_sort.pack(side="right")
-
-        # Reference: week 10 demo code "simple_treeview_demo.py"
-        # Create treeview
-        cols = ['Name', 'Quantity', 'Units', 'Category', 'Cost']
-
-        self.inventory = ttk.Treeview(self, columns=cols, show="headings",
-                                      selectmode='browse')
-
-        # Name each column and set alignment
-        for col in cols:
-            # Create a heading
-            self.inventory.heading(col, text=col)
-            self.inventory.column(col, anchor='w')
-
         self.populate_inventory()
         self.inventory.pack()
-
 
 
     def populate_inventory(self):
@@ -77,9 +78,21 @@ class Inventory(tk.Frame):
             # add the prepared list as a row to the inventory
             self.inventory.insert("", "end", values=store_vals)
 
-    def sort(self):
-        """ Use code from slides"""
-        pass
+
+    def sort_lowstock(self, tv, col):
+        """
+        Sorts through tree columns
+        Reference: Week 10 Lecture Slides
+        Reference: GUI Programming, p. 385
+
+        EDIT: updated to consider int and floats
+        """
+
+        itemlist = list(tv.get_children(''))
+        # Convert to float before sorting
+        itemlist.sort(key=lambda x: float(tv.set(x, col)))
+        for index, iid in enumerate(itemlist):
+            tv.move(iid, tv.parent(iid), index)
 
 
 class Orders(tk.Frame):
