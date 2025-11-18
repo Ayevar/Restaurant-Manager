@@ -29,7 +29,8 @@ class Inventory(tk.Frame):
 
         tk.Frame.__init__(self, parent)
 
-        label = tk.Label(self, text="Inventory", fg="orange", bg=self.controller.BACKGROUND_COLOR,
+        label = tk.Label(self, text="Inventory", fg="orange",
+                         bg=self.controller.BACKGROUND_COLOR,
                          font=self.controller.HEADER_FONT)
         label.pack(fill="both", expand=True)
 
@@ -47,14 +48,18 @@ class Inventory(tk.Frame):
 
 
         # To-Do: Create button options functions [edit, sort, etc]
-        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR, pady= 10)
+        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
+                                     pady= 10)
         self.button_frame.pack(fill="both", expand=True)
 
         # BUTTONS
-        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange", state='disabled')
+        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange",
+                             state='disabled')
 
         btn_sort = tk.Button(self.button_frame, text="view low stock",
-                             bg="orange", command=lambda: self.sort_lowstock(self.inventory, "quantity"))
+                             bg="orange",
+                             command=lambda: self.sort_lowstock(self.inventory,
+                                                                "quantity"))
 
         btn_edit.pack(side="right")
         btn_sort.pack(side="right")

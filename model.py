@@ -55,6 +55,10 @@ class Ingredients:
 
         return dict(self.db)
 
+    def get_ingredient(self, n):
+
+        return dict(self.db)[n]
+
 
     def add_ingredient(self):
         """
