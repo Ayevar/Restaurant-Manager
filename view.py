@@ -94,6 +94,12 @@ class Inventory(tk.Frame):
         for index, iid in enumerate(itemlist):
             tv.move(iid, tv.parent(iid), index)
 
+    def add_ingredient(self):
+        pass
+
+    def remove_ingredient(self):
+        pass
+
 
 class Orders(tk.Frame):
 
