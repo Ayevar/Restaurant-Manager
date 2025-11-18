@@ -99,11 +99,31 @@ class Inventory(tk.Frame):
         for index, iid in enumerate(itemlist):
             tv.move(iid, tv.parent(iid), index)
 
-    def add_ingredient(self):
-        pass
+    def add_ingredient(self, ingredient: str) -> bool:
+        """
+        Reference Week 10 Lecture
 
-    def remove_ingredient(self):
-        pass
+        add new ingredient type (key) to the database (by name only), ensure
+        ingredient does not already exist (all info matches)
+        """
+        if ingredient in list(self.db.keys()):
+            return False
+        else:
+            self.db[ingredient] = {"Quantity": "-", "Unit": "-", "Category": "-", "Cost": "-"}
+            return True
+
+    def remove_ingredient(self, ingredient: str) -> bool:
+        """
+        remove ingredient key to the database, ensure
+        ingredient is in database before deleting key.
+
+        *** Returns True if ingredient is in database, False if successfully deleted
+        """
+        if ingredient not in list(self.db.keys()):
+            return False
+        else:
+            self.db[ingredient].pop()
+            return True
 
 
 class Orders(tk.Frame):
