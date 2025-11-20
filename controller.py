@@ -58,6 +58,11 @@ class App(tk.Tk):
     def show_frame(self, next):
         # advance to next frame
         frame = self.pages[next]
+
+        # refresh if the frame has a refresh method
+        if hasattr(frame, "refresh"):
+            frame.refresh()
+
         # update frame
         frame.tkraise()
 

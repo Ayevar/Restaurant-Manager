@@ -67,6 +67,7 @@ class Inventory(tk.Frame):
         btn_edit.pack(side="right")
         btn_sort.pack(side="right")
         self.populate_inventory()
+
         self.inventory.pack()
 
 
@@ -87,13 +88,19 @@ class Inventory(tk.Frame):
             self.inventory.insert("", "end", values=store_vals)
 
 
-    def refresh_tree_quantity(self, key):
+    def refresh(self):
         """
         Update how many items show in inventory
         Prob use treeview ID and look through keys
 
         Reference: Lab 10 Exercise 2
         """
+
+        # delete everything and re-add everything
+        for row in self.inventory.get_children():
+            self.inventory.delete(row)
+
+        self.populate_inventory()
 
 
 
@@ -111,6 +118,8 @@ class Inventory(tk.Frame):
         itemlist.sort(key=lambda x: float(tv.set(x, col)))
         for index, iid in enumerate(itemlist):
             tv.move(iid, tv.parent(iid), index)
+
+
 
     def add_ingredient(self):
         pass
@@ -173,11 +182,15 @@ class CreateOrder(tk.Frame):
         print("Quantity item: ", self.quantity_select.get())
 
         # Send data back to model
-        self.controller.order_data.create_order(self.ing_select.get(),
-                                        self.quantity_select.get())
 
+        if not self.controller.order_data.create_order(self.ing_select.get(),
+                                                   self.quantity_select.get()):
+            self.quantity_select.delete(0, tk.END)
+            self.quantity_select.insert(0, "Invalid entry")
+            return
 
         self.controller.show_frame(Orders)
+
 
 
 class CreateIngredient (tk.Frame):

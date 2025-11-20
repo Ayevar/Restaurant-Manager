@@ -62,23 +62,32 @@ class IngredientsStorage:
             return dict(db.get(n))
 
 
-    def add_ingredient(self):
+    def add_ingredient(self, ingredient: str) -> bool:
         """
         Reference Week 10 Lecture
 
-        add new ingredient type (key) to the database, ensure
+        add new ingredient type (key) to the database (by name only), ensure
         ingredient does not already exist (all info matches)
         """
-        pass
+        if ingredient in list(self.db.keys()):
+            return False
+        else:
+            self.db[ingredient] = {"Quantity": "-", "Unit": "-", "Category": "-", "Cost": "-"}
+            return True
 
-    def remove_ingredient(self):
+    def remove_ingredient(self, ingredient: str) -> bool:
         """
         remove ingredient key to the database, ensure
         ingredient is in database before deleting key.
 
-        *** Could return true or false here for clarity and updating
+        *** Returns True if ingredient is in database, False if successfully deleted
         """
-        pass
+        if ingredient not in list(self.db.keys()):
+            return False
+        else:
+            self.db[ingredient].pop()
+            return True
+
 
 class OrderStorage:
     """
@@ -108,10 +117,15 @@ class OrderStorage:
     def create_order(self, ingredient, quantity):
 
         # Open ingredient database and order database
-        with shelve.open(ING_DATA) as i_db:
-            # Check if ingredient is in database
-            if ingredient in dict(i_db).keys() and isinstance(quantity, int):
+        with shelve.open(ING_DATA, writeback=True) as i_db:
+
+            # Check if ingredient is in database and quantity is valid
+            if ingredient in dict(i_db).keys() and quantity.isdigit() == True and int(quantity) > 1:
                 with shelve.open(self.file) as or_db:
+
+                    # quantity is made up of only numbers, so convert to an int
+                    quantity = int(quantity)
+
                     # create a tag for the current order number
                     self.order_number = f'Order #{len(or_db)+1}'
                     or_db[self.order_number] = {"Ingredient": ingredient,
