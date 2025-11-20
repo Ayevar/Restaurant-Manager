@@ -1,5 +1,5 @@
 import tkinter as tk
-from view import Inventory, Orders
+from view import Inventory, Orders, CreateOrder, CreateIngredient
 from model import *
 
 
@@ -16,7 +16,8 @@ class App(tk.Tk):
         self.BACKGROUND_COLOR = "#fcf8ed"
         self.HEADER_FONT = ("Roboto", 18)
 
-        self.ingredient_data = Ingredients("ingredients_data")
+        self.ingredient_data = IngredientsStorage("ingredients_data")
+        self.order_data = OrderStorage("order_data")
 
         # create a frame container
         container = tk.Frame(self, bg=self.BACKGROUND_COLOR)
@@ -36,7 +37,7 @@ class App(tk.Tk):
 
         self.pages = {}
 
-        for p in (Inventory, Orders):
+        for p in (Inventory, Orders, CreateOrder, CreateIngredient):
             page = p(self.page_content, self)
             self.pages[p] = page
             page.grid(row=0, column=0, sticky="nsew")

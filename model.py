@@ -1,13 +1,14 @@
-import pickle
+import sqlite3
 import shelve
+from datetime import *
 
-DATA = "restaurant_data.pkl"
+ING_DATA = "ingredients_data"
+ORD_DATA = "order_data"
 
-
-class Ingredients:
+class IngredientsStorage:
 
     """
-        This class loads in pickle file data for Ingredients.
+        This class loads in shelve file data for Ingredients.
         It also allows ingredients to be added to and deleted from
         the data.
 
@@ -22,27 +23,25 @@ class Ingredients:
             if it has not already been created.
         """
 
-
         # Create ingredient categories list
         self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
 
-        # populate database with starter data if it is empty
+        # populate database with starter data
         self.file = file
 
         # Reference Week 10 Lecture
-        self.db = shelve.open(self.file)
+        # Open using 'with' so that shelf closes automatically
+        # to avoid error
+        with shelve.open(self.file) as db:
+            db.clear()
+            # Reference: https://docs.python.org/3/library/shelve.html
+            # If database has not been created (has no keys), then create
+            if not list(db.keys()):
+                # Store each item as a key in the db dict
 
-        # REMOVE LATER
-        self.db.clear()
-
-        # Reference: https://docs.python.org/3/library/shelve.html
-        # If database has not been created (has no keys), then create
-        if not list(self.db.keys()):
-            # Store each item as a key in the db dict
-
-            self.db["Bread Flour"] = {"Quantity": 13, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
-            self.db["Gala Apples"] = {"Quantity": 14, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
-            self.db["Chicken Thighs"] = {"Quantity": 16, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
+                db["Bread Flour"] = {"Quantity": 17, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
+                db["Gala Apples"] = {"Quantity": 19, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
+                db["Chicken Thighs"] = {"Quantity": 10, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
 
 
     def get_all_ingredients(self):
@@ -52,12 +51,15 @@ class Ingredients:
         Return a dict version of the database containing all the
         ingredients in the inventory
         """
-
-        return dict(self.db)
+        with shelve.open(self.file) as db:
+            return dict(db)
 
     def get_ingredient(self, n):
-
-        return dict(self.db)[n]
+        """
+            return single ingredient
+        """
+        with shelve.open(self.file) as db:
+            return dict(db.get(n))
 
 
     def add_ingredient(self):
@@ -78,8 +80,49 @@ class Ingredients:
         """
         pass
 
-    def close(self):
+class OrderStorage:
+    """
+        load and update user order data.
 
-        """Closes the open shelve database"""
+        Example of data structure:
+            Orders = {Order 1: {Ingredient: "milk",
+            "Quantity": 3}
+    """
 
-        self.db.close()
+    def __init__(self, file):
+
+        # populate database with starter data
+        self.file = file
+        self.order_number = ""
+        # Reference: https://docs.python.org/3/library/datetime.html
+        # use datetime to get current time
+        self.order_data = datetime.now()
+
+
+        # USED TO CHECK IF ANYTHING IS BEING STORED
+        # with shelve.open(self.file) as or_db:
+        #     print(dict(or_db))
+        #     or_db.clear()
+
+
+    def create_order(self, ingredient, quantity):
+
+        # Open ingredient database and order database
+        with shelve.open(ING_DATA) as i_db:
+            # Check if ingredient is in database
+            if ingredient in dict(i_db).keys() and isinstance(quantity, int):
+                with shelve.open(self.file) as or_db:
+                    # create a tag for the current order number
+                    self.order_number = f'Order #{len(or_db)+1}'
+                    or_db[self.order_number] = {"Ingredient": ingredient,
+                                                    "Quantity": quantity}
+                    # Update ingredient data
+                    # Store the current row data of ingredient key
+                    selected_ing = i_db[ingredient]
+                    selected_ing['Quantity'] += quantity
+                    # Update ingredient in database
+                    i_db[ingredient] = selected_ing
+                    print("New item data:", i_db[ingredient])
+                    return True
+
+        return False
