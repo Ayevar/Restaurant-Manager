@@ -388,7 +388,7 @@ class IngredientPopup(tk.Toplevel):
 
         tk.Label(self, text="Category").pack(anchor="w", padx=10, pady=3)
         self.category_var = tk.StringVar()
-        cbox = ttk.Combobox(self, textvariable=self.category_var, values=self.CATEGORIES)
+        cbox = ttk.Combobox(self, textvariable=self.category_var, values=self.CATEGORIES, state="readonly")
         cbox.pack(fill="x", padx=10)
         if ingredient:
             self.category_var.set(ingredient["category"])
@@ -413,14 +413,16 @@ class IngredientPopup(tk.Toplevel):
         cost = self.cost_var.get()
         unit_amt = self.unit_amount_var.get()
         unit_type = self.unit_var.get()
+        category = self.category_var.get()
 
         # check for possible invalid entries
-        if qty.isdigit() and int(qty) > 0 and unit_amt.isdigit() and int(unit_amt) > 0 and re.match(r"^\d+(\.\d{2})?$", cost):
+        if (qty.isdigit() and int(qty) > 0 and re.match(r"^\d+(\.\d+)?$", unit_amt) and unit_type != ""
+                and category != "" and float(unit_amt) > 0 and re.match(r"^\d+(\.\d{2})?$", cost)):
             data = {
                 "name": self.name_var.get(),
                 "quantity": int(qty),
                 "unit": f"{unit_amt} {unit_type}".strip(),
-                "category": self.category_var.get(),
+                "category": category,
                 "cost": float(cost)
             }
 
