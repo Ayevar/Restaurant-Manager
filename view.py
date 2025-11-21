@@ -6,9 +6,21 @@ https://q.utoronto.ca/courses/407671/modules/items/6875607
 import re
 import shelve
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from select import select
+
+
+"""
+NOTES
+- Implementing add/edit/delete ingredients only involved changing this file
+- The program still starts with default data but everything here *should* work once we start only using the data from the files 
+
+Possible To-Dos
+- Polish up the new order page and the add/edit ingredient popup to match the rest of the program
+- Maybe restructure a bit to make this more MVC-ish?
+- Adding the proper date/time stuff (check proposal feedback)
+"""
 
 
 class Inventory(tk.Frame):
@@ -44,6 +56,9 @@ class Inventory(tk.Frame):
 
         self.inventory = ttk.Treeview(self, columns=cols, show="headings",
                                       selectmode='browse')
+
+
+
         # Name each column and set alignment
         for col in cols:
             # Create a heading
@@ -57,8 +72,10 @@ class Inventory(tk.Frame):
         self.button_frame.pack(fill="both", expand=True)
 
         # BUTTONS
-        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange",
-                             state='disabled')
+        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange", command=self.edit_selected)
+
+        # Only can edit when a row is selected
+        self.inventory.bind("<<TreeviewSelect>>", lambda e: btn_edit.config(state="normal"))
 
         btn_sort = tk.Button(self.button_frame, text="view low stock",
                              bg="orange",
@@ -69,9 +86,13 @@ class Inventory(tk.Frame):
                              bg="orange",
                              command=lambda: IngredientPopup(self, on_save=self.add_ingredient))
 
+        btn_delete = tk.Button(self.button_frame, text="delete ingredient", bg="red",
+                               fg="white", command=self.remove_ingredient)
+
         btn_edit.pack(side="right")
         btn_sort.pack(side="right")
         btn_add_ing.pack(side="right")
+        btn_delete.pack(side="right")
         self.populate_inventory()
 
         self.inventory.pack()
@@ -130,31 +151,105 @@ class Inventory(tk.Frame):
 
         name = data["name"]
 
-        # --- Save to shelve ---
+        # Save to shelve
         with shelve.open("ingredients_data", writeback=True) as db:
             db[name] = {
-                "Quantity": data["Quantity"],
-                "Unit": data["Unit"],
-                "Category": data["Category"],
-                "Cost": data["Cost"]
+                "Quantity": int(data["quantity"]),
+                "Unit": data["unit"],
+                "Category": data["category"],
+                "Cost": float(data["cost"])
             }
 
-        # --- Add to Treeview ---
+        # Add to treeview
         row_values = [
             name,
-            data["Quantity"],
-            data["Unit"],
-            data["Category"],
-            data["Cost"]
+            data["quantity"],
+            data["unit"],
+            data["category"],
+            data["cost"]
         ]
 
         self.inventory.insert("", "end", values=row_values)
-
-        # Optional: refresh for good measure
         self.refresh()
 
     def remove_ingredient(self):
-        pass
+        # grab the highlighted row
+        selected = self.inventory.focus()
+        if not selected:
+            return
+
+        values = self.inventory.item(selected, "values")
+        name = values[0] # ingredient name is column 0
+
+        # Warning popup
+        confirm = messagebox.askyesno(
+            "Delete Ingredient",
+            f"Are you sure you want to delete '{name}'?"
+        )
+
+        if not confirm:
+            return  # user canceled
+
+        # Delete from database
+        with shelve.open("ingredients_data", writeback=True) as db:
+            if name in db:
+                del db[name]
+
+        # Remove from treeview
+        self.inventory.delete(selected)
+
+    def edit_selected(self):
+        selected = self.inventory.focus()
+        if not selected:
+            return
+
+        values = self.inventory.item(selected, "values")
+
+        # unpack the row
+        data = {
+            "name": values[0],
+            "quantity": values[1],
+            "unit": values[2],
+            "category": values[3],
+            "cost": values[4],
+            "tree_id": selected
+        }
+
+        # Open the popup with this data
+        IngredientPopup(self, on_save=self.update_ingredient, ingredient=data)
+
+    def update_ingredient(self, updated):
+        # pop tree_id (might cause issues if missing)
+        tree_id = updated.pop("tree_id", None)
+        if not tree_id:
+            return
+
+        # read old row values before changing (to get old name)
+        old_vals = self.inventory.item(tree_id, "values")
+        old_name = old_vals[0] if old_vals else None
+
+        # Update Treeview row (display)
+        self.inventory.item(tree_id, values=[
+            updated["name"],
+            updated["quantity"],
+            updated["unit"],
+            updated["category"],
+            updated["cost"]
+        ])
+
+        # Update shelve file
+        with shelve.open("ingredients_data", writeback=True) as db:
+            # if name changed, remove old entry (if exists)
+            # (might remove the ability to change names if it messes with the system)
+            if old_name and old_name in db and updated["name"] != old_name:
+                del db[old_name]
+
+            db[updated["name"]] = {
+                "Quantity": int(updated["quantity"]),
+                "Unit": updated["unit"],
+                "Category": updated["category"],
+                "Cost": float(updated["cost"])
+            }
 
 
 class Orders(tk.Frame):
@@ -220,6 +315,18 @@ class CreateOrder(tk.Frame):
 
         self.controller.show_frame(Orders)
 
+    def refresh(self):
+        # Reload ingredient names
+        ing_dict = self.controller.ingredient_data.get_all_ingredients().keys()
+        self.ing_select["values"] = list(ing_dict)
+
+        # Reset selection text
+        self.ing_select.set("Select an Ingredient")
+
+        # Clear quantity entry
+        self.quantity_select.delete(0, tk.END)
+        self.quantity_select.insert(0, "enter quantity")
+
 
 
 class CreateIngredient (tk.Frame):
@@ -231,14 +338,15 @@ class CreateIngredient (tk.Frame):
 
 
 class IngredientPopup(tk.Toplevel):
+    # No set ingredient by default (changing the popup if you're editing vs adding a new ingredient)
     def __init__(self, parent, on_save, ingredient = None):
         super().__init__(parent)
         self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
 
         self.title("Edit Ingredient" if ingredient else "Create New Ingredient")
         self.geometry("300x400")
-        self.transient(parent)   # stays above parent
-        self.grab_set()          # makes popup modal
+        self.transient(parent) # stays above parent
+        self.grab_set() # makes popup modal
 
         self.on_save = on_save
         self.ingredient = ingredient
@@ -248,22 +356,35 @@ class IngredientPopup(tk.Toplevel):
         self.name_var = tk.StringVar(value=ingredient["name"] if ingredient else "")
         tk.Entry(self, textvariable=self.name_var).pack(fill="x", padx=10)
 
+
         tk.Label(self, text="Quantity").pack(anchor="w", padx=10, pady=3)
-        self.quantity_var = tk.StringVar(value=ingredient["amount"] if ingredient else "")
+        self.quantity_var = tk.StringVar(value=ingredient["quantity"] if ingredient else "")
         tk.Entry(self, textvariable=self.quantity_var).pack(fill="x", padx=10)
 
 
         tk.Label(self, text="Unit:").pack(anchor="w", padx=10, pady=3)
 
-        self.unit_amount_var = tk.StringVar(value=ingredient["unit"] if ingredient else "")
+        # unit is a string like "5 KG" so split into amount and unit
+        if ingredient:
+            unit_parts = ingredient["unit"].split()
+            unit_amount = unit_parts[0]
+            unit_type = unit_parts[1]
+        else:
+            unit_amount = ""
+            unit_type = ""
+
+        self.unit_amount_var = tk.StringVar(value=unit_amount)
         tk.Entry(self, textvariable=self.unit_amount_var).pack(fill="x", padx=10)
 
+        # preset units
         units = ["MG", "G", "KG", "ML", "L", "PCS"]
         self.unit_var = tk.StringVar()
         cbox2 = ttk.Combobox(self, textvariable=self.unit_var, values=units, state="readonly")
         cbox2.pack(fill="x", padx=10)
+
         if ingredient:
-            self.unit_var.set(ingredient["unit"])
+            self.unit_var.set(unit_type)
+
 
         tk.Label(self, text="Category").pack(anchor="w", padx=10, pady=3)
         self.category_var = tk.StringVar()
@@ -272,35 +393,43 @@ class IngredientPopup(tk.Toplevel):
         if ingredient:
             self.category_var.set(ingredient["category"])
 
+
         tk.Label(self, text="Cost per unit").pack(anchor="w", padx=10, pady=3)
-        self.cost_var = tk.StringVar(value=ingredient["amount"] if ingredient else "")
+        self.cost_var = tk.StringVar(value=ingredient["cost"] if ingredient else "")
         tk.Entry(self, textvariable=self.cost_var).pack(fill="x", padx=10)
 
 
         self.warning_lbl = tk.Label(self, text="")
         self.warning_lbl.pack(anchor="n", padx=10, pady=3)
 
-        # --- Buttons ---
+        # buttons
         tk.Button(self, text="Save", command=self.save, bg="orange").pack(pady=10)
         tk.Button(self, text="Cancel", command=self.destroy).pack()
+
 
     def save(self):
 
         qty = self.quantity_var.get()
         cost = self.cost_var.get()
         unit_amt = self.unit_amount_var.get()
+        unit_type = self.unit_var.get()
 
-        # validate
+        # check for possible invalid entries
         if qty.isdigit() and int(qty) > 0 and unit_amt.isdigit() and int(unit_amt) > 0 and re.match(r"^\d+(\.\d{2})?$", cost):
             data = {
                 "name": self.name_var.get(),
-                "Quantity": int(qty),
-                "Unit": self.unit_amount_var.get() + " " + self.unit_var.get(),
-                "Category": self.category_var.get(),
-                "Cost": float(cost)
+                "quantity": int(qty),
+                "unit": f"{unit_amt} {unit_type}".strip(),
+                "category": self.category_var.get(),
+                "cost": float(cost)
             }
 
+            if self.ingredient and "tree_id" in self.ingredient:
+                data["tree_id"] = self.ingredient["tree_id"]
+
             self.on_save(data)
+
+            # only exit if entries are valid, otherwise stay to let the user try again
             self.destroy()
         else:
             self.warning_lbl.config(text="Invalid entry")
