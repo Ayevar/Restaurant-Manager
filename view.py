@@ -3,7 +3,8 @@ Reference Code, For Lecture 4 Video on how to show a new frame
 https://q.utoronto.ca/courses/407671/modules/items/6875607
 
 """
-
+import re
+import shelve
 import tkinter as tk
 from tkinter import ttk
 
@@ -64,8 +65,13 @@ class Inventory(tk.Frame):
                              command=lambda: self.sort_lowstock(self.inventory,
                                                                 "quantity"))
 
+        btn_add_ing = tk.Button(self.button_frame, text="add ingredient",
+                             bg="orange",
+                             command=lambda: IngredientPopup(self, on_save=self.add_ingredient))
+
         btn_edit.pack(side="right")
         btn_sort.pack(side="right")
+        btn_add_ing.pack(side="right")
         self.populate_inventory()
 
         self.inventory.pack()
@@ -119,10 +125,33 @@ class Inventory(tk.Frame):
         for index, iid in enumerate(itemlist):
             tv.move(iid, tv.parent(iid), index)
 
+    def add_ingredient(self, data):
+        """Handles adding the ingredient to DB & treeview."""
 
+        name = data["name"]
 
-    def add_ingredient(self):
-        pass
+        # --- Save to shelve ---
+        with shelve.open("ingredients_data", writeback=True) as db:
+            db[name] = {
+                "Quantity": data["Quantity"],
+                "Unit": data["Unit"],
+                "Category": data["Category"],
+                "Cost": data["Cost"]
+            }
+
+        # --- Add to Treeview ---
+        row_values = [
+            name,
+            data["Quantity"],
+            data["Unit"],
+            data["Category"],
+            data["Cost"]
+        ]
+
+        self.inventory.insert("", "end", values=row_values)
+
+        # Optional: refresh for good measure
+        self.refresh()
 
     def remove_ingredient(self):
         pass
@@ -199,3 +228,79 @@ class CreateIngredient (tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
+
+
+class IngredientPopup(tk.Toplevel):
+    def __init__(self, parent, on_save, ingredient = None):
+        super().__init__(parent)
+        self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
+
+        self.title("Edit Ingredient" if ingredient else "Create New Ingredient")
+        self.geometry("300x400")
+        self.transient(parent)   # stays above parent
+        self.grab_set()          # makes popup modal
+
+        self.on_save = on_save
+        self.ingredient = ingredient
+
+        # --- Fields ---
+        tk.Label(self, text="Ingredient Name").pack(anchor="w", padx=10, pady=3)
+        self.name_var = tk.StringVar(value=ingredient["name"] if ingredient else "")
+        tk.Entry(self, textvariable=self.name_var).pack(fill="x", padx=10)
+
+        tk.Label(self, text="Quantity").pack(anchor="w", padx=10, pady=3)
+        self.quantity_var = tk.StringVar(value=ingredient["amount"] if ingredient else "")
+        tk.Entry(self, textvariable=self.quantity_var).pack(fill="x", padx=10)
+
+
+        tk.Label(self, text="Unit:").pack(anchor="w", padx=10, pady=3)
+
+        self.unit_amount_var = tk.StringVar(value=ingredient["unit"] if ingredient else "")
+        tk.Entry(self, textvariable=self.unit_amount_var).pack(fill="x", padx=10)
+
+        units = ["MG", "G", "KG", "ML", "L", "PCS"]
+        self.unit_var = tk.StringVar()
+        cbox2 = ttk.Combobox(self, textvariable=self.unit_var, values=units, state="readonly")
+        cbox2.pack(fill="x", padx=10)
+        if ingredient:
+            self.unit_var.set(ingredient["unit"])
+
+        tk.Label(self, text="Category").pack(anchor="w", padx=10, pady=3)
+        self.category_var = tk.StringVar()
+        cbox = ttk.Combobox(self, textvariable=self.category_var, values=self.CATEGORIES)
+        cbox.pack(fill="x", padx=10)
+        if ingredient:
+            self.category_var.set(ingredient["category"])
+
+        tk.Label(self, text="Cost per unit").pack(anchor="w", padx=10, pady=3)
+        self.cost_var = tk.StringVar(value=ingredient["amount"] if ingredient else "")
+        tk.Entry(self, textvariable=self.cost_var).pack(fill="x", padx=10)
+
+
+        self.warning_lbl = tk.Label(self, text="")
+        self.warning_lbl.pack(anchor="n", padx=10, pady=3)
+
+        # --- Buttons ---
+        tk.Button(self, text="Save", command=self.save, bg="orange").pack(pady=10)
+        tk.Button(self, text="Cancel", command=self.destroy).pack()
+
+    def save(self):
+
+        qty = self.quantity_var.get()
+        cost = self.cost_var.get()
+        unit_amt = self.unit_amount_var.get()
+
+        # validate
+        if qty.isdigit() and int(qty) > 0 and unit_amt.isdigit() and int(unit_amt) > 0 and re.match(r"^\d+(\.\d{2})?$", cost):
+            data = {
+                "name": self.name_var.get(),
+                "Quantity": int(qty),
+                "Unit": self.unit_amount_var.get() + " " + self.unit_var.get(),
+                "Category": self.category_var.get(),
+                "Cost": float(cost)
+            }
+
+            self.on_save(data)
+            self.destroy()
+        else:
+            self.warning_lbl.config(text="Invalid entry")
