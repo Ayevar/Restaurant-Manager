@@ -129,8 +129,6 @@ class Inventory(tk.Frame):
 
         self.populate_inventory()
 
-
-
     def sort_lowstock(self, tv, col):
         """
         Sorts through tree columns
@@ -266,6 +264,54 @@ class Orders(tk.Frame):
         btn = tk.Button(self, text="Create New Order", bg="orange",
                              command=lambda: self.controller.show_frame(CreateOrder))
         btn.pack()
+        self.totalcost = tk.Label(self, text= "Total Costs: $0.00", fg="blue", bg=self.controller.BACKGROUND_COLOR,
+                                  font=self.controller.HEADER_FONT, pady=10)
+        self.totalcost.pack()
+        orders = ['ID', 'Ingredient', 'Quantity', 'Date ordered', 'Arrival date', 'Status', 'Price']
+        self.orders = ttk.Treeview(self, columns=orders, show="headings",
+                                    selectmode='browse')
+        for col in orders:
+            # Create a heading
+            self.orders.heading(col, text=col)
+            self.orders.column(col, anchor='w')
+        self.populate_inventory()
+
+        self.orders.pack()
+
+    def populate_inventory(self):
+        # using the controller reference, we can access the data
+        # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
+        orders = self.controller.order_data.get_orders()
+
+        # Look through keys and values in ingredient_data dict
+        for name, ord_metadata in orders.items():
+            # create a list with the ingredient name
+            store_vals = [name]
+            # Look through the inner keys in the dict and store their
+            # values in list
+            for keys, val in ord_metadata.items():
+                store_vals.append(val)
+            # add the prepared list as a row to the order history
+            self.orders.insert("", "end", values=store_vals)
+    def refresh(self):
+        """
+        Update how many items show in inventory
+        Prob use treeview ID and look through keys
+
+        Reference: Lab 10 Exercise 2
+        """
+        total = 0
+        orders = self.controller.order_data.get_orders()
+        # Look through keys and values in ingredient_data dict
+        # delete everything and re-add everything
+        for name, ord_metadata in orders.items():
+            total += ord_metadata['Cost']
+        for row in self.orders.get_children():
+            self.orders.delete(row)
+        self.totalcost.config(text=f'Total Costs: ${total}')
+        self.populate_inventory()
+
+
 
 
 class CreateOrder(tk.Frame):
@@ -284,9 +330,13 @@ class CreateOrder(tk.Frame):
 
         ing_dict = self.controller.ingredient_data.get_all_ingredients().keys()
 
-        self.ing_select = ttk.Combobox(self, values=list(ing_dict))
+        self.ing_select = ttk.Combobox(self, state='readonly', values=list(ing_dict))
         self.ing_select.set("Select an Ingredient")
         self.ing_select.pack()
+
+        self.ship_select = ttk.Combobox(self, state='readonly', values=['Same day', '1 day', '3 day'])
+        self.ship_select.set("Select shipping style")
+        self.ship_select.pack()
 
         # MUST CHECK FOR NUMBER INPUT
         self.quantity_select = tk.Entry(self)
@@ -308,7 +358,7 @@ class CreateOrder(tk.Frame):
         # Send data back to model
 
         if not self.controller.order_data.create_order(self.ing_select.get(),
-                                                   self.quantity_select.get()):
+                                                   self.quantity_select.get(), self.ship_select.get()):
             self.quantity_select.delete(0, tk.END)
             self.quantity_select.insert(0, "Invalid entry")
             return

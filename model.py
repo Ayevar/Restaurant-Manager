@@ -106,21 +106,35 @@ class OrderStorage:
         # Reference: https://docs.python.org/3/library/datetime.html
         # use datetime to get current time
         self.order_data = datetime.now()
-
-
         # USED TO CHECK IF ANYTHING IS BEING STORED
         # with shelve.open(self.file) as or_db:
         #     print(dict(or_db))
         #     or_db.clear()
 
+    def get_orders(self):
+        """
+        Reference Week 10 Lecture
 
-    def create_order(self, ingredient, quantity):
+        Return a dict version of the database containing all the
+        order history
+        """
+        with shelve.open(self.file) as db:
+            return dict(db)
+
+    def get_order(self, n):
+        """
+            return single order
+        """
+        with shelve.open(self.file) as db:
+            return dict(db.get(n))
+
+    def create_order(self, ingredient, quantity, shipping='Same Day'):
 
         # Open ingredient database and order database
         with shelve.open(ING_DATA, writeback=True) as i_db:
 
             # Check if ingredient is in database and quantity is valid
-            if ingredient in dict(i_db).keys() and quantity.isdigit() == True and int(quantity) > 1:
+            if ingredient in dict(i_db).keys() and quantity.isdigit() and int(quantity) >= 1:
                 with shelve.open(self.file) as or_db:
 
                     # quantity is made up of only numbers, so convert to an int
@@ -128,15 +142,42 @@ class OrderStorage:
 
                     # create a tag for the current order number
                     self.order_number = f'Order #{len(or_db)+1}'
-                    or_db[self.order_number] = {"Ingredient": ingredient,
-                                                    "Quantity": quantity}
-                    # Update ingredient data
-                    # Store the current row data of ingredient key
-                    selected_ing = i_db[ingredient]
-                    selected_ing['Quantity'] += quantity
-                    # Update ingredient in database
-                    i_db[ingredient] = selected_ing
-                    print("New item data:", i_db[ingredient])
+                    # Get the current time and save it in our dictionary as a String
+                    current_time = datetime.now().strftime("%y-%m-%d")
+                    price = 1.25
+                    arrival_time = current_time
+                    if shipping == '1 day':
+                        price = 1.10
+                        arrival_time = datetime.strptime(current_time, "%y-%m-%d")
+                        arrival_time += timedelta(days=1)
+                        arrival_time = arrival_time.strftime("%y-%m-%d")
+                    elif shipping == '3 day':
+                        price = 1
+                        arrival_time = datetime.strptime(current_time, "%y-%m-%d")
+                        arrival_time += timedelta(days=3)
+                        arrival_time = arrival_time.strftime("%y-%m-%d")
+                    price = round(i_db[ingredient]["Cost"]*price, 2) * quantity
+                    or_db[self.order_number] = {"Ingredient": ingredient, "Quantity": quantity, "Date Ordered": current_time,
+                                                "Arrival Date": arrival_time, "Status": "Pending", "Cost": price}
+                    # # Update ingredient data
+                    # # Store the current row data of ingredient key
+                    # selected_ing = i_db[ingredient]
+                    # selected_ing['Quantity'] += quantity
+                    # # Update ingredient in database
+                    # i_db[ingredient] = selected_ing
+                    # print("New item data:", i_db[ingredient])
                     return True
-
         return False
+
+    def remove_order(self, order: str) -> bool:
+        """
+        remove ingredient key to the database, ensure
+        ingredient is in database before deleting key.
+
+        *** Returns True if ingredient is in database, False if successfully deleted
+        """
+        if order not in list(self.db.keys()):
+            return False
+        else:
+            self.db[int(order)].pop()
+            return True
