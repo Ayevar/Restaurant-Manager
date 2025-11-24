@@ -32,16 +32,16 @@ class IngredientsStorage:
         # Reference Week 10 Lecture
         # Open using 'with' so that shelf closes automatically
         # to avoid error
-        with shelve.open(self.file) as db:
-            db.clear()
-            # Reference: https://docs.python.org/3/library/shelve.html
-            # If database has not been created (has no keys), then create
-            if not list(db.keys()):
-                # Store each item as a key in the db dict
-
-                db["Bread Flour"] = {"Quantity": 17, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
-                db["Gala Apples"] = {"Quantity": 19, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
-                db["Chicken Thighs"] = {"Quantity": 10, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
+        # with shelve.open(self.file) as db:
+        #     db.clear()
+        #     # Reference: https://docs.python.org/3/library/shelve.html
+        #     # If database has not been created (has no keys), then create
+        #     if not list(db.keys()):
+        #         # Store each item as a key in the db dict
+        #
+        #         db["Bread Flour"] = {"Quantity": 17, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
+        #         db["Gala Apples"] = {"Quantity": 19, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
+        #         db["Chicken Thighs"] = {"Quantity": 10, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
 
 
     def get_all_ingredients(self):
@@ -143,19 +143,18 @@ class OrderStorage:
                     # create a tag for the current order number
                     self.order_number = f'Order #{len(or_db)+1}'
                     # Get the current time and save it in our dictionary as a String
-                    current_time = datetime.now().strftime("%y-%m-%d")
-                    price = 1.25
-                    arrival_time = current_time
+                    current_time = datetime.now().strftime("%y-%m-%d, %H:%M")
+                    arrival_time = datetime.strptime(current_time, "%y-%m-%d, %H:%M")
                     if shipping == '1 day':
                         price = 1.10
-                        arrival_time = datetime.strptime(current_time, "%y-%m-%d")
                         arrival_time += timedelta(days=1)
-                        arrival_time = arrival_time.strftime("%y-%m-%d")
                     elif shipping == '3 day':
                         price = 1
-                        arrival_time = datetime.strptime(current_time, "%y-%m-%d")
                         arrival_time += timedelta(days=3)
-                        arrival_time = arrival_time.strftime("%y-%m-%d")
+                    else:
+                        price = 1.25
+                        arrival_time += timedelta(hours=6)
+                    arrival_time = arrival_time.strftime("%y-%m-%d, %H:%M")
                     price = round(i_db[ingredient]["Cost"]*price, 2) * quantity
                     or_db[self.order_number] = {"Ingredient": ingredient, "Quantity": quantity, "Date Ordered": current_time,
                                                 "Arrival Date": arrival_time, "Status": "Pending", "Cost": price}
@@ -179,5 +178,5 @@ class OrderStorage:
         if order not in list(self.db.keys()):
             return False
         else:
-            self.db[int(order)].pop()
+            self.db[int(order)]['Status'] = 'Cancelled'
             return True

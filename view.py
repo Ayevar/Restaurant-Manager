@@ -3,6 +3,7 @@ Reference Code, For Lecture 4 Video on how to show a new frame
 https://q.utoronto.ca/courses/407671/modules/items/6875607
 
 """
+from datetime import *
 import re
 import shelve
 import tkinter as tk
@@ -65,10 +66,8 @@ class Inventory(tk.Frame):
             self.inventory.heading(col, text=col.title())
             self.inventory.column(col, anchor='w')
 
-
-        # To-Do: Create button options functions [edit, sort, etc]
         self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
-                                     pady= 10)
+                                     pady=10)
         self.button_frame.pack(fill="both", expand=True)
 
         # BUTTONS
@@ -262,21 +261,35 @@ class Orders(tk.Frame):
         label.pack(fill="both", expand=True)
 
         btn = tk.Button(self, text="Create New Order", bg="orange",
-                             command=lambda: self.controller.show_frame(CreateOrder))
+                        command=lambda: self.controller.show_frame(CreateOrder))
         btn.pack()
-        self.totalcost = tk.Label(self, text= "Total Costs: $0.00", fg="blue", bg=self.controller.BACKGROUND_COLOR,
+        self.totalcost = tk.Label(self, text="Total Costs: $0.00", fg="blue",
                                   font=self.controller.HEADER_FONT, pady=10)
         self.totalcost.pack()
-        orders = ['ID', 'Ingredient', 'Quantity', 'Date ordered', 'Arrival date', 'Status', 'Price']
-        self.orders = ttk.Treeview(self, columns=orders, show="headings",
-                                    selectmode='browse')
+        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
+                                     pady=10)
+        self.button_frame.pack(fill="both", expand=True)
+        cancel_button = tk.Button(self.button_frame, text="Cancel Order", bg='orange', command=self.cancel_order)
+        cancel_button.pack(side='right')
+        update_button = tk.Button(self.button_frame, text="Process Shipped Orders", bg='orange',
+                                  command=self.update_orders)
+        update_button.pack(side='right')
+
+        orders_grid = tk.Frame(self)
+        orders_grid.pack()
+        orders_grid.grid_rowconfigure(0, weight=1)
+        orders_grid.grid_columnconfigure(0, weight=1)
+        orders = ['ID', 'Ingredient', 'Quantity', 'Date Ordered', 'Arrival Date', 'Status', 'Price']
+        self.orders = ttk.Treeview(orders_grid, columns=orders, show="headings", selectmode='browse')
         for col in orders:
             # Create a heading
             self.orders.heading(col, text=col)
             self.orders.column(col, anchor='w')
+        self.orders.grid(row=0, column=0, stick='nsew')
+        scrollbar = ttk.Scrollbar(orders_grid, orient=tk.VERTICAL, command=self.orders.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+        self.orders.configure(yscrollcommand=scrollbar.set)
         self.populate_inventory()
-
-        self.orders.pack()
 
     def populate_inventory(self):
         # using the controller reference, we can access the data
@@ -305,13 +318,80 @@ class Orders(tk.Frame):
         # Look through keys and values in ingredient_data dict
         # delete everything and re-add everything
         for name, ord_metadata in orders.items():
-            total += ord_metadata['Cost']
+            if ord_metadata['Status'] != 'Cancelled':
+                total += ord_metadata['Cost']
         for row in self.orders.get_children():
             self.orders.delete(row)
-        self.totalcost.config(text=f'Total Costs: ${total}')
+        self.totalcost.config(text=f'Total Costs: ${total:.2f}')
         self.populate_inventory()
 
+    def cancel_order(self):
+        selected = self.orders.focus()
+        if not selected:
+            return
+        values = self.orders.item(selected, "values")
+        if messagebox.askyesno('Remove Order?', f'Would you like to remove {values[0]}?'):
+            if values[5] == 'Cancelled':
+                messagebox.showerror("Error", "This order is already canceled")
+            else:
+                # Update Treeview row (display)
+                self.orders.item(selected, values=[
+                    values[0],
+                    values[1],
+                    values[2],
+                    values[3],
+                    values[4],
+                    "Cancelled",
+                    values[6]
+                ])
 
+                # Update shelve file
+                with shelve.open("order_data", writeback=True) as db:
+
+                    db[values[0]] = {
+                        "Ingredient": values[1],
+                        "Quantity": int(values[2]),
+                        "Date Ordered": values[3],
+                        "Arrival Date": values[4],
+                        "Status": "Cancelled",
+                        "Cost": values[6]
+                    }
+
+    def update_orders(self):
+        orders = self.controller.order_data.get_orders()
+        now = datetime.now()
+        changed = False
+        edits = []
+        with shelve.open("order_data", writeback=True) as or_db:
+            for name, ord_metadata in orders.items():
+                arrival_time = datetime.strptime(ord_metadata["Arrival Date"], "%y-%m-%d, %H:%M")
+                if ord_metadata['Status'] == 'Pending':
+                    or_db[name] = {
+                        "Ingredient": ord_metadata["Ingredient"],
+                        "Quantity": ord_metadata["Quantity"],
+                        "Date Ordered": ord_metadata["Date Ordered"],
+                        "Arrival Date": ord_metadata["Arrival Date"],
+                        "Status": "Shipped",
+                        "Cost": ord_metadata["Cost"]
+                    }
+                    edits.append((ord_metadata["Ingredient"], ord_metadata["Quantity"]))
+                    changed = True
+        if changed:
+            or_db.close()
+            with shelve.open("ingredients_data", writeback=True) as in_db:
+                for item in edits:
+                    in_db[item[0]] = {
+                        "Quantity": int(in_db[item[0]]["Quantity"] + ord_metadata["Quantity"]),
+                        "Unit": in_db[item[0]]["Unit"],
+                        "Category": in_db[item[0]]["Category"],
+                        "Cost": float(in_db[item[0]]["Cost"])
+                    }
+
+            self.controller.pages[Inventory].refresh()
+            self.refresh()
+            messagebox.showinfo("Inventory Updated", "Pending Orders have arrived, Inventory updated")
+        else:
+            messagebox.showinfo("No orders arrived", 'No Pending Orders have arrived yet.')
 
 
 class CreateOrder(tk.Frame):
@@ -334,10 +414,17 @@ class CreateOrder(tk.Frame):
         self.ing_select.set("Select an Ingredient")
         self.ing_select.pack()
 
+        # Combo box allowing user to set which shipping style they want
         self.ship_select = ttk.Combobox(self, state='readonly', values=['Same day', '1 day', '3 day'])
         self.ship_select.set("Select shipping style")
-        self.ship_select.pack()
+        self.ship_select.pack(pady=3)
 
+        costslabel = tk.Label(self, text="Shipping Costs:", fg="blue",
+                              font=('Roboto', 10), pady=3)
+        costslabel2 = tk.Label(self, text="Same Day Shipping = x1.25, 1 Day Shipping = x1.10, 3 Day Shipping = x1.00",
+                               fg="blue", font=('Roboto', 10), pady=3)
+        costslabel.pack()
+        costslabel2.pack()
         # MUST CHECK FOR NUMBER INPUT
         self.quantity_select = tk.Entry(self)
         self.quantity_select.insert(0, "enter quantity")
