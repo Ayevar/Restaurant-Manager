@@ -1,6 +1,8 @@
 import tkinter as tk
-from view import Inventory, Orders
+from view import Inventory, Orders, CreateOrder
 from model import *
+
+from PIL import Image, ImageTk
 
 
 
@@ -12,11 +14,18 @@ class App(tk.Tk):
         # Call parent tkinter class
         tk.Tk.__init__(self, *args, **kwargs)
 
+        # Create Logo
+        # Reference Lab week 10 exercise 1
+        logo_img = Image.open("Logo.png")
+        logo_img = logo_img.resize((logo_img.width//4,logo_img.height//4))
+        self.logo = ImageTk.PhotoImage(logo_img)
+
         # set background color
         self.BACKGROUND_COLOR = "#fcf8ed"
         self.HEADER_FONT = ("Roboto", 18)
 
-        self.ingredient_data = Ingredients("ingredients_data")
+        self.ingredient_data = IngredientsStorage("ingredients_data")
+        self.order_data = OrderStorage("order_data")
 
         # create a frame container
         container = tk.Frame(self, bg=self.BACKGROUND_COLOR)
@@ -36,16 +45,17 @@ class App(tk.Tk):
 
         self.pages = {}
 
-        for p in (Inventory, Orders):
+        for p in (Inventory, Orders, CreateOrder):
             page = p(self.page_content, self)
             self.pages[p] = page
             page.grid(row=0, column=0, sticky="nsew")
+            page.configure(bg="#fcf8ed")
 
         self.show_frame(Inventory)
         # create sidebar buttons
 
-        self.sidebar_title = tk.Label(self.sidebar_body, text="LOGO", fg="white", bg="orange", font="BOLD")
-        self.sidebar_title.pack(pady=10)
+        self.sidebar_logo = tk.Label(self.sidebar_body, image=self.logo, bg="orange")
+        self.sidebar_logo.pack(pady=10)
 
         self.btn_1 = self.btn(self.sidebar_body,"Inventory", lambda: self.show_frame(Inventory))
         self.btn_1.pack(pady=10)
@@ -57,6 +67,11 @@ class App(tk.Tk):
     def show_frame(self, next):
         # advance to next frame
         frame = self.pages[next]
+
+        # refresh if the frame has a refresh method
+        if hasattr(frame, "refresh"):
+            frame.refresh()
+
         # update frame
         frame.tkraise()
 
@@ -70,6 +85,7 @@ class App(tk.Tk):
 
 app = App()
 app.title("Restaurant Manager")
+app.configure(bg="#fcf8ed")
 # makes the window full screen
 app.state("zoom")
 app.resizable(False, False)
