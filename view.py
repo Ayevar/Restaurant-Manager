@@ -365,7 +365,7 @@ class Orders(tk.Frame):
         with shelve.open("order_data", writeback=True) as or_db:
             for name, ord_metadata in orders.items():
                 arrival_time = datetime.strptime(ord_metadata["Arrival Date"], "%y-%m-%d, %H:%M")
-                if ord_metadata['Status'] == 'Pending':
+                if ord_metadata['Status'] == 'Pending' and arrival_time <= now:
                     or_db[name] = {
                         "Ingredient": ord_metadata["Ingredient"],
                         "Quantity": ord_metadata["Quantity"],
