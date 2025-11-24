@@ -30,8 +30,6 @@ class IngredientsStorage:
         self.file = file
 
         # Reference Week 10 Lecture
-        # Open using 'with' so that shelf closes automatically
-        # to avoid error
         # with shelve.open(self.file) as db:
         #     db.clear()
         #     # Reference: https://docs.python.org/3/library/shelve.html

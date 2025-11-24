@@ -1,6 +1,8 @@
 import tkinter as tk
-from view import Inventory, Orders, CreateOrder, CreateIngredient
+from view import Inventory, Orders, CreateOrder
 from model import *
+
+from PIL import Image, ImageTk
 
 
 
@@ -11,6 +13,12 @@ class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         # Call parent tkinter class
         tk.Tk.__init__(self, *args, **kwargs)
+
+        # Create Logo
+        # Reference Lab week 10 exercise 1
+        logo_img = Image.open("Logo.png")
+        logo_img = logo_img.resize((logo_img.width//4,logo_img.height//4))
+        self.logo = ImageTk.PhotoImage(logo_img)
 
         # set background color
         self.BACKGROUND_COLOR = "#fcf8ed"
@@ -37,16 +45,17 @@ class App(tk.Tk):
 
         self.pages = {}
 
-        for p in (Inventory, Orders, CreateOrder, CreateIngredient):
+        for p in (Inventory, Orders, CreateOrder):
             page = p(self.page_content, self)
             self.pages[p] = page
             page.grid(row=0, column=0, sticky="nsew")
+            page.configure(bg="#fcf8ed")
 
         self.show_frame(Inventory)
         # create sidebar buttons
 
-        self.sidebar_title = tk.Label(self.sidebar_body, text="LOGO", fg="white", bg="orange", font="BOLD")
-        self.sidebar_title.pack(pady=10)
+        self.sidebar_logo = tk.Label(self.sidebar_body, image=self.logo, bg="orange")
+        self.sidebar_logo.pack(pady=10)
 
         self.btn_1 = self.btn(self.sidebar_body,"Inventory", lambda: self.show_frame(Inventory))
         self.btn_1.pack(pady=10)
@@ -76,6 +85,7 @@ class App(tk.Tk):
 
 app = App()
 app.title("Restaurant Manager")
+app.configure(bg="#fcf8ed")
 # makes the window full screen
 app.state("zoom")
 app.resizable(False, False)

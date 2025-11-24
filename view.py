@@ -9,9 +9,6 @@ import shelve
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from select import select
-
-
 """
 NOTES
 - Implementing add/edit/delete ingredients only involved changing this file
@@ -35,11 +32,6 @@ class Inventory(tk.Frame):
 
         """ create labels and create treeview
 
-            TO DO:
-            - Put into grid layout
-            - Add functions
-            - Finish Orders page
-
         """
 
         self.controller = controller
@@ -51,50 +43,70 @@ class Inventory(tk.Frame):
                          font=self.controller.HEADER_FONT)
         label.pack(fill="both", expand=True)
 
+        # Create container for vertical and horizontal scroll bar
+        inventory_grid = ttk.Frame(self)
+        # configure container row and column to page size
+
         # Reference: week 10 demo code "simple_treeview_demo.py"
         # Create treeview
         cols = ['name', 'quantity', 'units', 'category', 'cost']
-
-        self.inventory = ttk.Treeview(self, columns=cols, show="headings",
+        self.inventory = ttk.Treeview(inventory_grid, columns=cols, show="headings",
                                       selectmode='browse')
-
-
 
         # Name each column and set alignment
         for col in cols:
             # Create a heading
             self.inventory.heading(col, text=col.title())
-            self.inventory.column(col, anchor='w')
+            self.inventory.column(col, anchor='w', width=210, stretch=tk.NO)
+
 
         self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
                                      pady=10)
-        self.button_frame.pack(fill="both", expand=True)
+        self.button_frame.pack(side='top', fill="x")
 
-        # BUTTONS
-        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange", command=self.edit_selected)
+        # BUTTONS -------------------------------------------------------------
+        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange",
+                             command=self.edit_selected)
 
         # Only can edit when a row is selected
-        self.inventory.bind("<<TreeviewSelect>>", lambda e: btn_edit.config(state="normal"))
+        self.inventory.bind("<<TreeviewSelect>>",
+                            lambda e: btn_edit.config(state="normal"))
 
         btn_sort = tk.Button(self.button_frame, text="view low stock",
-                             bg="orange",
-                             command=lambda: self.sort_lowstock(self.inventory,
-                                                                "quantity"))
+                             bg="orange",command=lambda:
+                             self.sort_lowstock(self.inventory,"quantity"))
 
         btn_add_ing = tk.Button(self.button_frame, text="add ingredient",
-                             bg="orange",
-                             command=lambda: IngredientPopup(self, on_save=self.add_ingredient))
+                            bg="green", fg="white", command=lambda:
+                            IngredientPopup(self, on_save=self.add_ingredient))
 
-        btn_delete = tk.Button(self.button_frame, text="delete ingredient", bg="red",
-                               fg="white", command=self.remove_ingredient)
+        btn_delete = tk.Button(self.button_frame, text="delete ingredient",
+                               bg="red", command=self.remove_ingredient)
 
-        btn_edit.pack(side="right")
-        btn_sort.pack(side="right")
-        btn_add_ing.pack(side="right")
-        btn_delete.pack(side="right")
+        # Pack buttons with equal padding
+        padding = 2
+        btn_edit.pack(side="right", padx=padding)
+        btn_sort.pack(side="right", padx=padding)
+        btn_add_ing.pack(side="left", padx=padding)
+        btn_delete.pack(side="left", padx=padding)
+
+
+        inventory_grid.pack()
+        self.inventory.grid(row=0, column=0, sticky="nsew")
+
+        scrollbar_y = tk.Scrollbar(inventory_grid, orient=tk.VERTICAL, command=self.inventory.yview)
+        scrollbar_y.grid(row=0, column=1, sticky='ns')
+
+        scrollbar_x = tk.Scrollbar(inventory_grid, orient=tk.HORIZONTAL, command=self.inventory.xview)
+        scrollbar_x.grid(row=1, column=0, sticky='ew')
+
+        self.inventory.configure(yscrollcommand=scrollbar_y.set)
+        self.inventory.configure(xscrollcommand=scrollbar_x.set)
+
+        inventory_grid.rowconfigure(0, weight=1)
+        inventory_grid.columnconfigure(0, weight=1)
+
         self.populate_inventory()
-
-        self.inventory.pack()
 
 
     def populate_inventory(self):
@@ -260,15 +272,20 @@ class Orders(tk.Frame):
                          font=self.controller.HEADER_FONT, pady=10)
         label.pack(fill="both", expand=True)
 
-        btn = tk.Button(self, text="Create New Order", bg="orange",
-                        command=lambda: self.controller.show_frame(CreateOrder))
-        btn.pack()
+
+
         self.totalcost = tk.Label(self, text="Total Costs: $0.00", fg="blue",
-                                  font=self.controller.HEADER_FONT, pady=10)
-        self.totalcost.pack()
+                                  font=self.controller.HEADER_FONT, pady=10, bg=self.controller.BACKGROUND_COLOR)
+        self.totalcost.pack(fill="both", expand=True)
+
         self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
                                      pady=10)
         self.button_frame.pack(fill="both", expand=True)
+
+        btn = tk.Button(self.button_frame, text="Create New Order", bg="green", fg="white",
+                        command=lambda: self.controller.show_frame(CreateOrder))
+        btn.pack(side='left')
+
         cancel_button = tk.Button(self.button_frame, text="Cancel Order", bg='orange', command=self.cancel_order)
         cancel_button.pack(side='right')
         update_button = tk.Button(self.button_frame, text="Process Shipped Orders", bg='orange',
@@ -277,6 +294,7 @@ class Orders(tk.Frame):
 
         orders_grid = tk.Frame(self)
         orders_grid.pack()
+
         orders_grid.grid_rowconfigure(0, weight=1)
         orders_grid.grid_columnconfigure(0, weight=1)
         orders = ['ID', 'Ingredient', 'Quantity', 'Date Ordered', 'Arrival Date', 'Status', 'Price']
@@ -284,14 +302,22 @@ class Orders(tk.Frame):
         for col in orders:
             # Create a heading
             self.orders.heading(col, text=col)
-            self.orders.column(col, anchor='w')
-        self.orders.grid(row=0, column=0, stick='nsew')
-        scrollbar = ttk.Scrollbar(orders_grid, orient=tk.VERTICAL, command=self.orders.yview)
-        scrollbar.grid(row=0, column=1, sticky='ns')
-        self.orders.configure(yscrollcommand=scrollbar.set)
-        self.populate_inventory()
+            self.orders.column(col, anchor='w', width=150, stretch=tk.NO)
 
-    def populate_inventory(self):
+        self.orders.grid(row=0, column=0, stick='nsew')
+
+        scrollbar_y = tk.Scrollbar(orders_grid, orient=tk.VERTICAL, command=self.orders.yview)
+        scrollbar_y.grid(row=0, column=1, sticky='ns')
+
+        scrollbar_x = tk.Scrollbar(orders_grid, orient=tk.HORIZONTAL, command=self.orders.xview)
+        scrollbar_x.grid(row=1, column=0, sticky='ew')
+
+        self.orders.configure(yscrollcommand=scrollbar_y.set)
+        self.orders.configure(xscrollcommand=scrollbar_x.set)
+
+        self.populate_orders()
+
+    def populate_orders(self):
         # using the controller reference, we can access the data
         # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
         orders = self.controller.order_data.get_orders()
@@ -322,8 +348,8 @@ class Orders(tk.Frame):
                 total += ord_metadata['Cost']
         for row in self.orders.get_children():
             self.orders.delete(row)
-        self.totalcost.config(text=f'Total Costs: ${total:.2f}')
-        self.populate_inventory()
+        self.totalcost.config(text=f'Total Costs: ${total:.2f}', bg=self.controller.BACKGROUND_COLOR)
+        self.populate_orders()
 
     def cancel_order(self):
         selected = self.orders.focus()
@@ -420,9 +446,9 @@ class CreateOrder(tk.Frame):
         self.ship_select.pack(pady=3)
 
         costslabel = tk.Label(self, text="Shipping Costs:", fg="blue",
-                              font=('Roboto', 10), pady=3)
+                              font=('Roboto', 10), pady=3, bg=self.controller.BACKGROUND_COLOR)
         costslabel2 = tk.Label(self, text="Same Day Shipping = x1.25, 1 Day Shipping = x1.10, 3 Day Shipping = x1.00",
-                               fg="blue", font=('Roboto', 10), pady=3)
+                               fg="blue", font=('Roboto', 10), pady=3, bg=self.controller.BACKGROUND_COLOR)
         costslabel.pack()
         costslabel2.pack()
         # MUST CHECK FOR NUMBER INPUT
@@ -466,24 +492,22 @@ class CreateOrder(tk.Frame):
 
 
 
-class CreateIngredient (tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-
-        self.controller = controller
-
-
 class IngredientPopup(tk.Toplevel):
     # No set ingredient by default (changing the popup if you're editing vs adding a new ingredient)
     def __init__(self, parent, on_save, ingredient = None):
         super().__init__(parent)
-        self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
 
+        self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
         self.title("Edit Ingredient" if ingredient else "Create New Ingredient")
-        self.geometry("300x400")
+        self.geometry("400x400")
+        self.configure(bg="#fcf8ed")
         self.transient(parent) # stays above parent
         self.grab_set() # makes popup modal
+
+        # Get size of parent grid box
+        x, y, width, height = parent.grid_bbox(column=0, row=0)
+        self.geometry(f"+50+100")
+
 
         self.on_save = on_save
         self.ingredient = ingredient
