@@ -192,7 +192,7 @@ class OrderStorage:
                         price = 1.25
                         arrival_time += timedelta(hours=6)
                     arrival_time = arrival_time.strftime("%y-%m-%d, %H:%M")
-                    price = round(i_db[ingredient]["Cost"]*price, 2) * quantity
+                    price = round(i_db[ingredient]["Cost"]*price * quantity, 2)
                     or_db[self.order_number] = {"Ingredient": ingredient, 
                                                 "Quantity": quantity, 
                                                 "Date Ordered": current_time,

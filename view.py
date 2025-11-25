@@ -721,12 +721,20 @@ class IngredientPopup(tk.Toplevel):
         tk.Label(self, text="Quantity").pack(
             anchor="w", padx=10, pady=3
         )
+
         self.quantity_var = tk.StringVar(
             value=ingredient["quantity"] if ingredient else ""
         )
-        tk.Entry(self, textvariable=self.quantity_var).pack(
-            fill="x", padx=10
-        )
+
+
+        if ingredient:
+            tk.Entry(self, textvariable=self.quantity_var, state="readonly").pack(
+                fill="x", padx=10
+            )
+        else:
+            tk.Entry(self, textvariable=self.quantity_var).pack(
+                fill="x", padx=10
+            )
 
 
         tk.Label(self, text="Unit:").pack(anchor="w", padx=10, pady=3)
