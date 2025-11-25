@@ -70,7 +70,12 @@ class IngredientsStorage:
         if ingredient in list(self.db.keys()):
             return False
         else:
-            self.db[ingredient] = {"Quantity": "-", "Unit": "-", "Category": "-", "Cost": "-"}
+            self.db[ingredient] = {
+                "Quantity": "-", 
+                "Unit": "-", 
+                "Category": "-", 
+                "Cost": "-"
+            }
             return True
 
     def remove_ingredient(self, ingredient: str) -> bool:
@@ -139,7 +144,7 @@ class OrderStorage:
                     quantity = int(quantity)
 
                     # create a tag for the current order number
-                    self.order_number = f'Order #{len(or_db)+1}'
+                    self.order_number = f'Order #{len(or_db) + 1}'
                     # Get the current time and save it in our dictionary as a String
                     current_time = datetime.now().strftime("%y-%m-%d, %H:%M")
                     arrival_time = datetime.strptime(current_time, "%y-%m-%d, %H:%M")

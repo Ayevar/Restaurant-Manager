@@ -9,38 +9,23 @@ import shelve
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-"""
-NOTES
-- Implementing add/edit/delete ingredients only involved changing this file
-- The program still starts with default data but everything here *should* work once we start only using the data from the files 
-
-Possible To-Dos
-- Polish up the new order page and the add/edit ingredient popup to match the rest of the program
-- Maybe restructure a bit to make this more MVC-ish?
-- Adding the proper date/time stuff (check proposal feedback)
-"""
-
-
 class Inventory(tk.Frame):
-
-    """
-        inherit from Frame_layout Class and populate page content
-        with a Treeview, button, search, etc
-    """
+    """Inherit from Frame_layout Class and populate page content with a Treeview, button, search, etc"""
 
     def __init__(self, parent, controller):
-
-        """ create labels and create treeview
-
-        """
+        """create labels and create treeview"""
 
         self.controller = controller
 
         tk.Frame.__init__(self, parent)
 
-        label = tk.Label(self, text="Inventory", fg="orange",
-                         bg=self.controller.BACKGROUND_COLOR,
-                         font=self.controller.HEADER_FONT)
+        label = tk.Label(
+            self, 
+            text="Inventory", 
+            fg="orange",
+            bg=self.controller.BACKGROUND_COLOR,
+            font=self.controller.HEADER_FONT
+        )
         label.pack(fill="both", expand=True)
 
         # Create container for vertical and horizontal scroll bar
@@ -50,8 +35,12 @@ class Inventory(tk.Frame):
         # Reference: week 10 demo code "simple_treeview_demo.py"
         # Create treeview
         cols = ['name', 'quantity', 'units', 'category', 'cost']
-        self.inventory = ttk.Treeview(inventory_grid, columns=cols, show="headings",
-                                      selectmode='browse')
+        self.inventory = ttk.Treeview(
+            inventory_grid, 
+            columns=cols, 
+            show="headings", 
+            selectmode='browse'
+        )
 
         # Name each column and set alignment
         for col in cols:
@@ -60,28 +49,48 @@ class Inventory(tk.Frame):
             self.inventory.column(col, anchor='w', width=210, stretch=tk.NO)
 
 
-        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
-                                     pady=10)
+        self.button_frame = tk.Frame(
+            self, 
+            bg=self.controller.BACKGROUND_COLOR, 
+            pady=10
+        )
         self.button_frame.pack(side='top', fill="x")
 
         # BUTTONS -------------------------------------------------------------
-        btn_edit = tk.Button(self.button_frame, text="edit", bg="orange",
-                             command=self.edit_selected)
+        btn_edit = tk.Button(
+            self.button_frame, 
+            text="edit", 
+            bg="orange",
+            command=self.edit_selected
+        )
 
         # Only can edit when a row is selected
-        self.inventory.bind("<<TreeviewSelect>>",
-                            lambda e: btn_edit.config(state="normal"))
+        self.inventory.bind(
+            "<<TreeviewSelect>>",
+            lambda e: btn_edit.config(state="normal")
+        )
 
-        btn_sort = tk.Button(self.button_frame, text="view low stock",
-                             bg="orange",command=lambda:
-                             self.sort_lowstock(self.inventory,"quantity"))
+        btn_sort = tk.Button(
+            self.button_frame,
+            text="view low stock",
+            bg="orange",
+            command=lambda: self.sort_lowstock(self.inventory,"quantity")
+        )
 
-        btn_add_ing = tk.Button(self.button_frame, text="add ingredient",
-                            bg="green", fg="white", command=lambda:
-                            IngredientPopup(self, on_save=self.add_ingredient))
+        btn_add_ing = tk.Button(
+            self.button_frame, 
+            text="add ingredient",
+            bg="green", 
+            fg="white", 
+            command=lambda: IngredientPopup(self, on_save=self.add_ingredient)
+        )
 
-        btn_delete = tk.Button(self.button_frame, text="delete ingredient",
-                               bg="red", command=self.remove_ingredient)
+        btn_delete = tk.Button(
+            self.button_frame, 
+            text="delete ingredient",
+            bg="red", 
+            command=self.remove_ingredient
+        )
 
         # Pack buttons with equal padding
         padding = 2
@@ -94,10 +103,14 @@ class Inventory(tk.Frame):
         inventory_grid.pack()
         self.inventory.grid(row=0, column=0, sticky="nsew")
 
-        scrollbar_y = tk.Scrollbar(inventory_grid, orient=tk.VERTICAL, command=self.inventory.yview)
+        scrollbar_y = tk.Scrollbar(
+            inventory_grid, orient=tk.VERTICAL, command=self.inventory.yview
+        )
         scrollbar_y.grid(row=0, column=1, sticky='ns')
 
-        scrollbar_x = tk.Scrollbar(inventory_grid, orient=tk.HORIZONTAL, command=self.inventory.xview)
+        scrollbar_x = tk.Scrollbar(
+            inventory_grid, orient=tk.HORIZONTAL, command=self.inventory.xview
+        )
         scrollbar_x.grid(row=1, column=0, sticky='ew')
 
         self.inventory.configure(yscrollcommand=scrollbar_y.set)
@@ -109,6 +122,7 @@ class Inventory(tk.Frame):
         self.populate_inventory()
 
 
+    # -------------------------------------------------------------------------
     def populate_inventory(self):
         # using the controller reference, we can access the data
         # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
@@ -137,7 +151,6 @@ class Inventory(tk.Frame):
         # delete everything and re-add everything
         for row in self.inventory.get_children():
             self.inventory.delete(row)
-
         self.populate_inventory()
 
     def sort_lowstock(self, tv, col):
@@ -149,10 +162,11 @@ class Inventory(tk.Frame):
         EDIT: updated to consider int and floats
         """
 
-        itemlist = list(tv.get_children(''))
+        items = list(tv.get_children(""))
         # Convert to float before sorting
-        itemlist.sort(key=lambda x: float(tv.set(x, col)))
-        for index, iid in enumerate(itemlist):
+        items.sort(key=lambda x: float(tv.set(x, col)))
+
+        for index, iid in enumerate(items):
             tv.move(iid, tv.parent(iid), index)
 
     def add_ingredient(self, data):
@@ -225,7 +239,11 @@ class Inventory(tk.Frame):
         }
 
         # Open the popup with this data
-        IngredientPopup(self, on_save=self.update_ingredient, ingredient=data)
+        IngredientPopup(
+            self, 
+            on_save=self.update_ingredient, 
+            ingredient=data
+        )
 
     def update_ingredient(self, updated):
         # pop tree_id (might cause issues if missing)
@@ -238,13 +256,16 @@ class Inventory(tk.Frame):
         old_name = old_vals[0] if old_vals else None
 
         # Update Treeview row (display)
-        self.inventory.item(tree_id, values=[
-            updated["name"],
-            updated["quantity"],
-            updated["unit"],
-            updated["category"],
-            updated["cost"]
-        ])
+        self.inventory.item(
+            tree_id, 
+            values=[
+                updated["name"],
+                updated["quantity"],
+                updated["unit"],
+                updated["category"],
+                updated["cost"]
+            ]
+        )
 
         # Update shelve file
         with shelve.open("ingredients_data", writeback=True) as db:
@@ -268,28 +289,56 @@ class Orders(tk.Frame):
 
         self.controller = controller
 
-        label = tk.Label(self, text="Orders", fg="orange", bg=self.controller.BACKGROUND_COLOR,
-                         font=self.controller.HEADER_FONT, pady=10)
+        label = tk.Label(
+            self, 
+            text="Orders", 
+            fg="orange", 
+            bg=self.controller.BACKGROUND_COLOR,
+            font=self.controller.HEADER_FONT, 
+            pady=10
+        )
         label.pack(fill="both", expand=True)
 
-
-
-        self.totalcost = tk.Label(self, text="Total Costs: $0.00", fg="blue",
-                                  font=self.controller.HEADER_FONT, pady=10, bg=self.controller.BACKGROUND_COLOR)
+        self.totalcost = tk.Label(
+            self, 
+            text="Total Costs: $0.00", 
+            fg="blue",
+            font=self.controller.HEADER_FONT, 
+            bg=self.controller.BACKGROUND_COLOR,
+            pady=10
+        )
         self.totalcost.pack(fill="both", expand=True)
 
-        self.button_frame = tk.Frame(self, bg=self.controller.BACKGROUND_COLOR,
-                                     pady=10)
+        self.button_frame = tk.Frame(
+            self, 
+            bg=self.controller.BACKGROUND_COLOR,
+            pady=10
+        )
         self.button_frame.pack(fill="both", expand=True)
 
-        btn = tk.Button(self.button_frame, text="Create New Order", bg="green", fg="white",
-                        command=lambda: self.controller.show_frame(CreateOrder))
+        btn = tk.Button(
+            self.button_frame, 
+            text="Create New Order", 
+            bg="green", 
+            fg="white",
+            command=lambda: self.controller.show_frame(CreateOrder)
+        )
         btn.pack(side='left')
 
-        cancel_button = tk.Button(self.button_frame, text="Cancel Order", bg='orange', command=self.cancel_order)
+        cancel_button = tk.Button(
+            self.button_frame, 
+            text="Cancel Order", 
+            bg='orange', 
+            command=self.cancel_order
+        )
         cancel_button.pack(side='right')
-        update_button = tk.Button(self.button_frame, text="Process Shipped Orders", bg='orange',
-                                  command=self.update_orders)
+
+        update_button = tk.Button(
+            self.button_frame, 
+            text="Process Shipped Orders", 
+            bg='orange',
+            command=self.update_orders
+        )
         update_button.pack(side='right')
 
         orders_grid = tk.Frame(self)
@@ -297,19 +346,30 @@ class Orders(tk.Frame):
 
         orders_grid.grid_rowconfigure(0, weight=1)
         orders_grid.grid_columnconfigure(0, weight=1)
+
         orders = ['ID', 'Ingredient', 'Quantity', 'Date Ordered', 'Arrival Date', 'Status', 'Price']
-        self.orders = ttk.Treeview(orders_grid, columns=orders, show="headings", selectmode='browse')
+        self.orders = ttk.Treeview(
+            orders_grid, 
+            columns=orders, 
+            show="headings", 
+            selectmode='browse'
+        )
+
         for col in orders:
             # Create a heading
             self.orders.heading(col, text=col)
             self.orders.column(col, anchor='w', width=150, stretch=tk.NO)
 
-        self.orders.grid(row=0, column=0, stick='nsew')
+        self.orders.grid(row=0, column=0, sticky='nsew')
 
-        scrollbar_y = tk.Scrollbar(orders_grid, orient=tk.VERTICAL, command=self.orders.yview)
+        scrollbar_y = tk.Scrollbar(
+            orders_grid, orient=tk.VERTICAL, command=self.orders.yview
+        )
         scrollbar_y.grid(row=0, column=1, sticky='ns')
 
-        scrollbar_x = tk.Scrollbar(orders_grid, orient=tk.HORIZONTAL, command=self.orders.xview)
+        scrollbar_x = tk.Scrollbar(
+            orders_grid, orient=tk.HORIZONTAL, command=self.orders.xview
+        )
         scrollbar_x.grid(row=1, column=0, sticky='ew')
 
         self.orders.configure(yscrollcommand=scrollbar_y.set)
@@ -332,6 +392,7 @@ class Orders(tk.Frame):
                 store_vals.append(val)
             # add the prepared list as a row to the order history
             self.orders.insert("", "end", values=store_vals)
+
     def refresh(self):
         """
         Update how many items show in inventory
@@ -346,34 +407,49 @@ class Orders(tk.Frame):
         for name, ord_metadata in orders.items():
             if ord_metadata['Status'] != 'Cancelled':
                 total += ord_metadata['Cost']
+    
         for row in self.orders.get_children():
             self.orders.delete(row)
-        self.totalcost.config(text=f'Total Costs: ${total:.2f}', bg=self.controller.BACKGROUND_COLOR)
+    
+        self.totalcost.config(
+            text=f'Total Costs: ${total:.2f}', 
+            bg=self.controller.BACKGROUND_COLOR
+        )
         self.populate_orders()
 
     def cancel_order(self):
         selected = self.orders.focus()
         if not selected:
             return
+    
         values = self.orders.item(selected, "values")
-        if messagebox.askyesno('Remove Order?', f'Would you like to remove {values[0]}?'):
+        if messagebox.askyesno(
+            'Remove Order?', 
+            f'Would you like to remove {values[0]}?'
+        ):
             if values[5] == 'Cancelled':
-                messagebox.showerror("Error", "This order is already canceled")
+                messagebox.showerror(
+                    "Error",
+                    "This order is already canceled"
+                )
             else:
+
                 # Update Treeview row (display)
-                self.orders.item(selected, values=[
-                    values[0],
-                    values[1],
-                    values[2],
-                    values[3],
-                    values[4],
-                    "Cancelled",
-                    values[6]
-                ])
+                self.orders.item(
+                    selected, 
+                    values=[
+                        values[0],
+                        values[1],
+                        values[2],
+                        values[3],
+                        values[4],
+                        "Cancelled",
+                        values[6]
+                    ]
+                )
 
                 # Update shelve file
                 with shelve.open("order_data", writeback=True) as db:
-
                     db[values[0]] = {
                         "Ingredient": values[1],
                         "Quantity": int(values[2]),
@@ -388,9 +464,14 @@ class Orders(tk.Frame):
         now = datetime.now()
         changed = False
         edits = []
+
         with shelve.open("order_data", writeback=True) as or_db:
             for name, ord_metadata in orders.items():
-                arrival_time = datetime.strptime(ord_metadata["Arrival Date"], "%y-%m-%d, %H:%M")
+                arrival_time = datetime.strptime(
+                    ord_metadata["Arrival Date"], 
+                    "%y-%m-%d, %H:%M"
+                )
+
                 if ord_metadata['Status'] == 'Pending' and arrival_time <= now:
                     or_db[name] = {
                         "Ingredient": ord_metadata["Ingredient"],
@@ -400,8 +481,12 @@ class Orders(tk.Frame):
                         "Status": "Shipped",
                         "Cost": ord_metadata["Cost"]
                     }
-                    edits.append((ord_metadata["Ingredient"], ord_metadata["Quantity"]))
+                    edits.append(
+                        (ord_metadata["Ingredient"], 
+                         ord_metadata["Quantity"])
+                    )
                     changed = True
+
         if changed:
             or_db.close()
             with shelve.open("ingredients_data", writeback=True) as in_db:
@@ -415,9 +500,16 @@ class Orders(tk.Frame):
 
             self.controller.pages[Inventory].refresh()
             self.refresh()
-            messagebox.showinfo("Inventory Updated", "Pending Orders have arrived, Inventory updated")
+            
+            messagebox.showinfo(
+                "Inventory Updated", 
+                "Pending Orders have arrived. Inventory updated"
+            )
         else:
-            messagebox.showinfo("No orders arrived", 'No Pending Orders have arrived yet.')
+            messagebox.showinfo(
+                "No orders arrived", 
+                "No Pending Orders have arrived yet."
+            )
 
 
 class CreateOrder(tk.Frame):
@@ -436,42 +528,78 @@ class CreateOrder(tk.Frame):
 
         ing_dict = self.controller.ingredient_data.get_all_ingredients().keys()
 
-        self.ing_select = ttk.Combobox(self, state='readonly', values=list(ing_dict))
+        self.ing_select = ttk.Combobox(
+            self, 
+            state='readonly', 
+            values=list(ing_dict)
+        )
         self.ing_select.set("Select an Ingredient")
         self.ing_select.pack()
 
         # Combo box allowing user to set which shipping style they want
-        self.ship_select = ttk.Combobox(self, state='readonly', values=['Same day', '1 day', '3 day'])
+        self.ship_select = ttk.Combobox(
+            self, 
+            state='readonly', 
+            values=['Same day', '1 day', '3 day']
+        )
         self.ship_select.set("Select shipping style")
         self.ship_select.pack(pady=3)
 
-        costslabel = tk.Label(self, text="Shipping Costs:", fg="blue",
-                              font=('Roboto', 10), pady=3, bg=self.controller.BACKGROUND_COLOR)
-        costslabel2 = tk.Label(self, text="Same Day Shipping = x1.25, 1 Day Shipping = x1.10, 3 Day Shipping = x1.00",
-                               fg="blue", font=('Roboto', 10), pady=3, bg=self.controller.BACKGROUND_COLOR)
+        costslabel = tk.Label(
+            self, 
+            text="Shipping Costs:", 
+            fg="blue",
+            font=('Roboto', 10), 
+            pady=3, 
+            bg=self.controller.BACKGROUND_COLOR
+        )
         costslabel.pack()
+
+        costslabel2 = tk.Label(
+            self, 
+            text="Same Day Shipping = x1.25," 
+            "1 Day Shipping = x1.10, "
+            "3 Day Shipping = x1.00",
+            fg="blue", 
+            font=('Roboto', 10), 
+            pady=3, 
+            bg=self.controller.BACKGROUND_COLOR
+        )
         costslabel2.pack()
+
         # MUST CHECK FOR NUMBER INPUT
         self.quantity_select = tk.Entry(self)
         self.quantity_select.insert(0, "enter quantity")
         self.quantity_select.pack()
 
-        cancel_btn = tk.Button(self, text="CANCEL", bg="red", fg="white",
-                        command=lambda: self.controller.show_frame(Orders))
+        cancel_btn = tk.Button(
+            self, 
+            text="CANCEL", 
+            bg="red", 
+            fg="white",
+            command=lambda: self.controller.show_frame(Orders)
+        )
         cancel_btn.pack()
 
-        order_btn = tk.Button(self, text="ORDER", bg="Green",
-                               command=self.create)
+        order_btn = tk.Button(
+            self, 
+            text="ORDER", 
+            bg="Green",
+            command=self.create
+        )
         order_btn.pack()
 
     def create(self):
-        print("Ordered item: ",self.ing_select.get())
+        print("Ordered item: ", self.ing_select.get())
         print("Quantity item: ", self.quantity_select.get())
 
         # Send data back to model
 
-        if not self.controller.order_data.create_order(self.ing_select.get(),
-                                                   self.quantity_select.get(), self.ship_select.get()):
+        if not self.controller.order_data.create_order(
+            self.ing_select.get(),
+            self.quantity_select.get(), 
+            self.ship_select.get()
+        ):
             self.quantity_select.delete(0, tk.END)
             self.quantity_select.insert(0, "Invalid entry")
             return
@@ -497,8 +625,16 @@ class IngredientPopup(tk.Toplevel):
     def __init__(self, parent, on_save, ingredient = None):
         super().__init__(parent)
 
-        self.CATEGORIES = ["Dairy", "Fats and Oils", "Grains", "Fruits and Vegetables", "Proteins"]
-        self.title("Edit Ingredient" if ingredient else "Create New Ingredient")
+        self.CATEGORIES = [
+            "Dairy", 
+            "Fats and Oils", 
+            "Grains", 
+            "Fruits and Vegetables", 
+            "Proteins"
+        ]
+        self.title(
+            "Edit Ingredient" if ingredient else "Create New Ingredient"
+        )
         self.geometry("400x400")
         self.configure(bg="#fcf8ed")
         self.transient(parent) # stays above parent
@@ -513,14 +649,24 @@ class IngredientPopup(tk.Toplevel):
         self.ingredient = ingredient
 
         # --- Fields ---
-        tk.Label(self, text="Ingredient Name").pack(anchor="w", padx=10, pady=3)
-        self.name_var = tk.StringVar(value=ingredient["name"] if ingredient else "")
+        tk.Label(self, text="Ingredient Name").pack(
+            anchor="w", padx=10, pady=3
+        )
+        self.name_var = tk.StringVar(
+            value=ingredient["name"] if ingredient else ""
+        )
         tk.Entry(self, textvariable=self.name_var).pack(fill="x", padx=10)
 
 
-        tk.Label(self, text="Quantity").pack(anchor="w", padx=10, pady=3)
-        self.quantity_var = tk.StringVar(value=ingredient["quantity"] if ingredient else "")
-        tk.Entry(self, textvariable=self.quantity_var).pack(fill="x", padx=10)
+        tk.Label(self, text="Quantity").pack(
+            anchor="w", padx=10, pady=3
+        )
+        self.quantity_var = tk.StringVar(
+            value=ingredient["quantity"] if ingredient else ""
+        )
+        tk.Entry(self, textvariable=self.quantity_var).pack(
+            fill="x", padx=10
+        )
 
 
         tk.Label(self, text="Unit:").pack(anchor="w", padx=10, pady=3)
@@ -535,28 +681,46 @@ class IngredientPopup(tk.Toplevel):
             unit_type = ""
 
         self.unit_amount_var = tk.StringVar(value=unit_amount)
-        tk.Entry(self, textvariable=self.unit_amount_var).pack(fill="x", padx=10)
+        tk.Entry(self, textvariable=self.unit_amount_var).pack(
+            fill="x", padx=10
+        )
 
         # preset units
         units = ["MG", "G", "KG", "ML", "L", "PCS"]
         self.unit_var = tk.StringVar()
-        cbox2 = ttk.Combobox(self, textvariable=self.unit_var, values=units, state="readonly")
+        cbox2 = ttk.Combobox(
+            self, 
+            textvariable=self.unit_var, 
+            values=units, 
+            state="readonly"
+        )
         cbox2.pack(fill="x", padx=10)
 
         if ingredient:
             self.unit_var.set(unit_type)
 
 
-        tk.Label(self, text="Category").pack(anchor="w", padx=10, pady=3)
+        tk.Label(self, text="Category").pack(
+            anchor="w", padx=10, pady=3
+        )
         self.category_var = tk.StringVar()
-        cbox = ttk.Combobox(self, textvariable=self.category_var, values=self.CATEGORIES, state="readonly")
+        cbox = ttk.Combobox(
+            self, 
+            textvariable=self.category_var, 
+            values=self.CATEGORIES, 
+            state="readonly"
+        )
         cbox.pack(fill="x", padx=10)
         if ingredient:
             self.category_var.set(ingredient["category"])
 
 
-        tk.Label(self, text="Cost per unit").pack(anchor="w", padx=10, pady=3)
-        self.cost_var = tk.StringVar(value=ingredient["cost"] if ingredient else "")
+        tk.Label(self, text="Cost per unit").pack(
+            anchor="w", padx=10, pady=3
+        )
+        self.cost_var = tk.StringVar(
+            value=ingredient["cost"] if ingredient else ""
+        )
         tk.Entry(self, textvariable=self.cost_var).pack(fill="x", padx=10)
 
 
@@ -564,8 +728,18 @@ class IngredientPopup(tk.Toplevel):
         self.warning_lbl.pack(anchor="n", padx=10, pady=3)
 
         # buttons
-        tk.Button(self, text="Save", command=self.save, bg="orange").pack(pady=10)
-        tk.Button(self, text="Cancel", command=self.destroy).pack()
+        tk.Button(
+            self, 
+            text="Save", 
+            command=self.save, 
+            bg="orange"
+        ).pack(pady=10)
+
+        tk.Button(
+            self, 
+            text="Cancel", 
+            command=self.destroy
+        ).pack()
 
 
     def save(self):
