@@ -342,7 +342,8 @@ class Orders(tk.Frame):
 
         # Create datetime object for current time
         # This can be changed for testing
-        self.curr_datetime = datetime.now()
+        self.curr_datetime = datetime(2026, 10, 26, 14, 30, 45)
+        # self.curr_datetime = datetime.now()
 
         # Create label that shows total cost of orders
         self.totalcost = tk.Label(
@@ -520,7 +521,6 @@ class Orders(tk.Frame):
 
     def update_orders(self):
         orders = self.controller.order_data.get_orders()
-        now = datetime.now()
         changed = False
         edits = []
 
@@ -531,7 +531,7 @@ class Orders(tk.Frame):
                     "%y-%m-%d, %H:%M"
                 )
 
-                if ord_metadata['Status'] == 'Pending' and arrival_time <= now:
+                if ord_metadata['Status'] == 'Pending' and arrival_time <= self.curr_datetime :
                     or_db[name] = {
                         "Ingredient": ord_metadata["Ingredient"],
                         "Quantity": ord_metadata["Quantity"],
