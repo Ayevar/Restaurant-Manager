@@ -531,7 +531,7 @@ class Orders(tk.Frame):
                     "%y-%m-%d, %H:%M"
                 )
 
-                if ord_metadata['Status'] == 'Pending' and arrival_time <= self.curr_datetime :
+                if ord_metadata['Status'] == 'Pending' and arrival_time <= self.curr_datetime:
                     or_db[name] = {
                         "Ingredient": ord_metadata["Ingredient"],
                         "Quantity": ord_metadata["Quantity"],
