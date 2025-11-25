@@ -1,6 +1,7 @@
 import tkinter as tk
 from view import Inventory, Orders, CreateOrder
 from model import *
+from datetime import *
 from PIL import Image, ImageTk
 
 
@@ -23,7 +24,7 @@ class App(tk.Tk):
 
         # Set project style
         self.BACKGROUND_COLOR = "#fcf8ed"
-        self.HEADER_FONT = ("Roboto", 18)
+        self.HEADER_FONT = ("Roboto", 24, "bold")
 
         # Data storage
         self.ingredient_data = IngredientsStorage("ingredients_data")
@@ -63,6 +64,17 @@ class App(tk.Tk):
         )
         self.sidebar_logo.pack(pady=10)
 
+        curr_date = f'DATE: \n{date.today()}'
+
+        self.time_lbl = tk.Label(
+            self.sidebar_body,
+            text= curr_date,
+            bg= "orange",
+            fg= "blue",
+            font= "BOLD"
+        )
+        self.time_lbl.pack(pady=10)
+
         self.btn_1 = self.btn(
             self.sidebar_body,"Inventory", 
             lambda: self.show_frame(Inventory)
@@ -100,6 +112,8 @@ class App(tk.Tk):
 # Run application
 app = App()
 app.title("Restaurant Manager")
+app.iconphoto(True, app.logo)
+app.call('wm', 'iconphoto', app._w, app.logo)
 app.configure(bg="#fcf8ed")
 app.state("zoomed") # Sets as full screen
 app.resizable(False, False)

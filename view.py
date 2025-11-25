@@ -10,15 +10,26 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 class Inventory(tk.Frame):
-    """Inherit from Frame_layout Class and populate page content with a Treeview, button, search, etc"""
+    """
+    Inherit from Frame_layout Class and populate page content 
+    with a Treeview, button, search, etc
+    """
 
     def __init__(self, parent, controller):
-        """create labels and create treeview"""
 
+        """
+            initialize controller and parent class,
+            create basic title labels, treeview, buttons, scrollbar
+            and call populate inventory to fill treeview
+        """
+
+        # Call controller from parent class
         self.controller = controller
 
+        # Inherit parent super class
         tk.Frame.__init__(self, parent)
 
+        # Create title label
         label = tk.Label(
             self, 
             text="Inventory", 
@@ -48,7 +59,7 @@ class Inventory(tk.Frame):
             self.inventory.heading(col, text=col.title())
             self.inventory.column(col, anchor='w', width=210, stretch=tk.NO)
 
-
+        # Create button container 
         self.button_frame = tk.Frame(
             self, 
             bg=self.controller.BACKGROUND_COLOR, 
@@ -56,7 +67,8 @@ class Inventory(tk.Frame):
         )
         self.button_frame.pack(side='top', fill="x")
 
-        # BUTTONS -------------------------------------------------------------
+        # BUTTONS
+
         btn_edit = tk.Button(
             self.button_frame, 
             text="edit", 
@@ -70,6 +82,7 @@ class Inventory(tk.Frame):
             lambda e: btn_edit.config(state="normal")
         )
 
+        # Let user sort for low stock items
         btn_sort = tk.Button(
             self.button_frame,
             text="view low stock",
@@ -99,30 +112,33 @@ class Inventory(tk.Frame):
         btn_add_ing.pack(side="left", padx=padding)
         btn_delete.pack(side="left", padx=padding)
 
-
+        # Pack inventory grid that holds treeview and scrollers 
         inventory_grid.pack()
         self.inventory.grid(row=0, column=0, sticky="nsew")
 
         scrollbar_y = tk.Scrollbar(
-            inventory_grid, orient=tk.VERTICAL, command=self.inventory.yview
+            inventory_grid, orient=tk.VERTICAL, 
+            command=self.inventory.yview
         )
         scrollbar_y.grid(row=0, column=1, sticky='ns')
 
         scrollbar_x = tk.Scrollbar(
-            inventory_grid, orient=tk.HORIZONTAL, command=self.inventory.xview
+            inventory_grid, orient=tk.HORIZONTAL, 
+            command=self.inventory.xview
         )
         scrollbar_x.grid(row=1, column=0, sticky='ew')
 
+        # Configure scrollbar to inventory 
         self.inventory.configure(yscrollcommand=scrollbar_y.set)
         self.inventory.configure(xscrollcommand=scrollbar_x.set)
 
         inventory_grid.rowconfigure(0, weight=1)
         inventory_grid.columnconfigure(0, weight=1)
 
+        # Populate treeview
         self.populate_inventory()
 
 
-    # -------------------------------------------------------------------------
     def populate_inventory(self):
         # using the controller reference, we can access the data
         # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
@@ -195,7 +211,11 @@ class Inventory(tk.Frame):
         self.inventory.insert("", "end", values=row_values)
         self.refresh()
 
+
     def remove_ingredient(self):
+        """
+        User able to remove selected ingredents
+        """
         # grab the highlighted row
         selected = self.inventory.focus()
         if not selected:
@@ -222,6 +242,9 @@ class Inventory(tk.Frame):
         self.inventory.delete(selected)
 
     def edit_selected(self):
+        """
+        Users able to edit data in the ingredent list
+        """
         selected = self.inventory.focus()
         if not selected:
             return
@@ -246,12 +269,17 @@ class Inventory(tk.Frame):
         )
 
     def update_ingredient(self, updated):
-        # pop tree_id (might cause issues if missing)
+
+        """
+        If user edits the ingredents list inventory refreshes to
+        updates treeview and writes back to shelf file
+        """
+        # Pop tree_id (might cause issues if missing)
         tree_id = updated.pop("tree_id", None)
         if not tree_id:
             return
 
-        # read old row values before changing (to get old name)
+        # Read old row values before changing (to get old name)
         old_vals = self.inventory.item(tree_id, "values")
         old_name = old_vals[0] if old_vals else None
 
@@ -284,7 +312,19 @@ class Inventory(tk.Frame):
 
 class Orders(tk.Frame):
 
+    """
+    inherit from Frame_layout Class and populate page content
+    with a Treeview, button, search, etc
+    """
+
     def __init__(self, parent, controller):
+
+        """
+        initialize controller and parent class,
+        create basic title labels, treeview, buttons, scrollbar
+        and call populate inventory to fill treeview
+        """
+
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
@@ -299,11 +339,17 @@ class Orders(tk.Frame):
         )
         label.pack(fill="both", expand=True)
 
+
+        # Create datetime object for current time
+        # This can be changed for testing
+        self.curr_datetime = datetime.now()
+
+        # Create label that shows total cost of orders
         self.totalcost = tk.Label(
             self, 
             text="Total Costs: $0.00", 
             fg="blue",
-            font=self.controller.HEADER_FONT, 
+            font=("Roboto", 18, "bold"), 
             bg=self.controller.BACKGROUND_COLOR,
             pady=10
         )
@@ -328,7 +374,8 @@ class Orders(tk.Frame):
         cancel_button = tk.Button(
             self.button_frame, 
             text="Cancel Order", 
-            bg='orange', 
+            bg='red',
+            fg="white", 
             command=self.cancel_order
         )
         cancel_button.pack(side='right')
@@ -347,7 +394,15 @@ class Orders(tk.Frame):
         orders_grid.grid_rowconfigure(0, weight=1)
         orders_grid.grid_columnconfigure(0, weight=1)
 
-        orders = ['ID', 'Ingredient', 'Quantity', 'Date Ordered', 'Arrival Date', 'Status', 'Price']
+        orders = [
+            'ID', 
+            'Ingredient', 
+            'Quantity', 
+            'Date Ordered', 
+            'Arrival Date', 
+            'Status', 
+            'Price'
+        ]
         self.orders = ttk.Treeview(
             orders_grid, 
             columns=orders, 
@@ -377,6 +432,7 @@ class Orders(tk.Frame):
 
         self.populate_orders()
 
+
     def populate_orders(self):
         # using the controller reference, we can access the data
         # Reference: https://github.com/michaelnixon/gui-persistent-demo-app
@@ -392,6 +448,7 @@ class Orders(tk.Frame):
                 store_vals.append(val)
             # add the prepared list as a row to the order history
             self.orders.insert("", "end", values=store_vals)
+
 
     def refresh(self):
         """
@@ -416,6 +473,7 @@ class Orders(tk.Frame):
             bg=self.controller.BACKGROUND_COLOR
         )
         self.populate_orders()
+
 
     def cancel_order(self):
         selected = self.orders.focus()
@@ -458,6 +516,7 @@ class Orders(tk.Frame):
                         "Status": "Cancelled",
                         "Cost": values[6]
                     }
+
 
     def update_orders(self):
         orders = self.controller.order_data.get_orders()
@@ -589,6 +648,7 @@ class CreateOrder(tk.Frame):
         )
         order_btn.pack()
 
+
     def create(self):
         print("Ordered item: ", self.ing_select.get())
         print("Quantity item: ", self.quantity_select.get())
@@ -606,6 +666,7 @@ class CreateOrder(tk.Frame):
 
         self.controller.show_frame(Orders)
 
+
     def refresh(self):
         # Reload ingredient names
         ing_dict = self.controller.ingredient_data.get_all_ingredients().keys()
@@ -617,7 +678,6 @@ class CreateOrder(tk.Frame):
         # Clear quantity entry
         self.quantity_select.delete(0, tk.END)
         self.quantity_select.insert(0, "enter quantity")
-
 
 
 class IngredientPopup(tk.Toplevel):

@@ -29,17 +29,29 @@ class IngredientsStorage:
         # populate database with starter data
         self.file = file
 
-        # Reference Week 10 Lecture
+        """USE TO CLEAR ALL DATA"""
         # with shelve.open(self.file) as db:
         #     db.clear()
-        #     # Reference: https://docs.python.org/3/library/shelve.html
-        #     # If database has not been created (has no keys), then create
-        #     if not list(db.keys()):
-        #         # Store each item as a key in the db dict
-        #
-        #         db["Bread Flour"] = {"Quantity": 17, "Unit": "5 KG", "Category": self.CATEGORIES[2], "Cost": 9.52}
-        #         db["Gala Apples"] = {"Quantity": 19, "Unit": "4 LB", "Category": self.CATEGORIES[3], "Cost": 7.99}
-        #         db["Chicken Thighs"] = {"Quantity": 10, "Unit": "1.5 KG", "Category": self.CATEGORIES[4], "Cost": 12.35}
+
+
+        """Use to create some auto testing data"""
+        # if not list(db.keys()):
+        #     db["Bread Flour"] = {"Quantity": 17, 
+        #                          "Unit": "5 KG",
+        #                          "Category": self.CATEGORIES[2], 
+        #                          "Cost": 9.52
+        #                         }
+        #     db["Gala Apples"] = {"Quantity": 19, 
+        #                          "Unit": "4 LB",
+        #                          "Category": self.CATEGORIES[3], 
+        #                          "Cost": 7.99
+        #                         }
+        #     db["Chicken Thighs"] = {"Quantity": 10, 
+        #                             "Unit": "1.5 KG",
+        #                             "Category": self.CATEGORIES[4], 
+        #                             "Cost": 12.35
+        #                         }
+
 
 
     def get_all_ingredients(self):
@@ -51,6 +63,7 @@ class IngredientsStorage:
         """
         with shelve.open(self.file) as db:
             return dict(db)
+
 
     def get_ingredient(self, n):
         """
@@ -78,6 +91,7 @@ class IngredientsStorage:
             }
             return True
 
+
     def remove_ingredient(self, ingredient: str) -> bool:
         """
         remove ingredient key to the database, ensure
@@ -94,11 +108,13 @@ class IngredientsStorage:
 
 class OrderStorage:
     """
-        load and update user order data.
+    load and update user order data.
 
-        Example of data structure:
-            Orders = {Order 1: {Ingredient: "milk",
-            "Quantity": 3}
+
+    Example of data structure:
+        Orders = {"Ingredient": ingredient, "Quantity": quantity,
+        "Date Ordered": current_time, "Arrival Date": arrival_time,
+        "Status": "Pending", "Cost": price}
     """
 
     def __init__(self, file):
@@ -106,14 +122,16 @@ class OrderStorage:
         # populate database with starter data
         self.file = file
         self.order_number = ""
+
         # Reference: https://docs.python.org/3/library/datetime.html
         # use datetime to get current time
         self.order_data = datetime.now()
-        # USED TO CHECK IF ANYTHING IS BEING STORED
-        # with shelve.open(self.file) as or_db:
-        #     print(dict(or_db))
-        #     or_db.clear()
 
+        """USE TO CLEAR DATA"""
+        # with shelve.open(self.file) as db:
+        #     db.clear()
+
+        
     def get_orders(self):
         """
         Reference Week 10 Lecture
@@ -124,14 +142,29 @@ class OrderStorage:
         with shelve.open(self.file) as db:
             return dict(db)
 
+
     def get_order(self, n):
         """
+            Reference Week 10 Lecture
             return single order
         """
         with shelve.open(self.file) as db:
             return dict(db.get(n))
 
+
     def create_order(self, ingredient, quantity, shipping='Same Day'):
+
+        """
+        Create an order object in the data. Check if valid ingredient is being
+        considered, if quantity is a digit entry and when arrival date for
+        object should be set too.
+
+        :param ingredient:
+        :param quantity:
+        :param shipping:
+        :return:
+        """
+
 
         # Open ingredient database and order database
         with shelve.open(ING_DATA, writeback=True) as i_db:
@@ -159,17 +192,16 @@ class OrderStorage:
                         arrival_time += timedelta(hours=6)
                     arrival_time = arrival_time.strftime("%y-%m-%d, %H:%M")
                     price = round(i_db[ingredient]["Cost"]*price, 2) * quantity
-                    or_db[self.order_number] = {"Ingredient": ingredient, "Quantity": quantity, "Date Ordered": current_time,
-                                                "Arrival Date": arrival_time, "Status": "Pending", "Cost": price}
-                    # # Update ingredient data
-                    # # Store the current row data of ingredient key
-                    # selected_ing = i_db[ingredient]
-                    # selected_ing['Quantity'] += quantity
-                    # # Update ingredient in database
-                    # i_db[ingredient] = selected_ing
-                    # print("New item data:", i_db[ingredient])
+                    or_db[self.order_number] = {"Ingredient": ingredient, 
+                                                "Quantity": quantity, 
+                                                "Date Ordered": current_time,
+                                                "Arrival Date": arrival_time, 
+                                                "Status": "Pending", 
+                                                "Cost": price
+                                            }
                     return True
         return False
+
 
     def remove_order(self, order: str) -> bool:
         """
