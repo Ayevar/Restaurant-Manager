@@ -35,23 +35,23 @@ class IngredientsStorage:
 
 
         """Use to create some auto testing data"""
-        with shelve.open(self.file) as db:
-            if not list(db.keys()):
-                db["Bread Flour"] = {"Quantity": 17,
-                                     "Unit": "5 KG",
-                                     "Category": self.CATEGORIES[2],
-                                     "Cost": 9.52
-                                    }
-                db["Gala Apples"] = {"Quantity": 19,
-                                     "Unit": "4 LB",
-                                     "Category": self.CATEGORIES[3],
-                                     "Cost": 7.99
-                                    }
-                db["Chicken Thighs"] = {"Quantity": 10,
-                                        "Unit": "1.5 KG",
-                                        "Category": self.CATEGORIES[4],
-                                        "Cost": 12.35
-                                    }
+        # with shelve.open(self.file) as db:
+        #     if not list(db.keys()):
+        #         db["Bread Flour"] = {"Quantity": 17,
+        #                              "Unit": "5 KG",
+        #                              "Category": self.CATEGORIES[2],
+        #                              "Cost": 9.52
+        #                             }
+        #         db["Gala Apples"] = {"Quantity": 19,
+        #                              "Unit": "4 LB",
+        #                              "Category": self.CATEGORIES[3],
+        #                              "Cost": 7.99
+        #                             }
+        #         db["Chicken Thighs"] = {"Quantity": 10,
+        #                                 "Unit": "1.5 KG",
+        #                                 "Category": self.CATEGORIES[4],
+        #                                 "Cost": 12.35
+        #                             }
 
 
 
