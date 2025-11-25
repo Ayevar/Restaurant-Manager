@@ -8,10 +8,13 @@ A demo for a restaurant management system. The system assists restaurant manager
   - Remove ingredients from inventory (ex. restaurant managers may want to remove "pumpkin spice" from inventory after autumn)
 
 **On the "Orders" page user can:**
+
+  **NOTE: _To update "Pending" Order to Shipped If Arrival Data is reacted, Press "Process shipping Orders" This will update treeview in Inventory and Order status_**
+
   - Order new ingredient to increase stock/ quantity and choose shipping options (1 day shipping, 3 day shipping, etc)
   - View all past orders which include an ID, order date, shipping date, status (pending, shipped, cancelled), ingredient, and quantity
   - Cancel an order if it has not been shipped out yet
   - Users will also be able to see their total spending based on their ordered ingredients and shipping costs displayed at the top of both pages.
 
-  <u>**NOTE: TO UPDATE "Pending" Order to Shipped If Arrival Data is reacted, Press "Process shipping Orders" This will update treeview in Inventory and Order status**</u>
+  
 
